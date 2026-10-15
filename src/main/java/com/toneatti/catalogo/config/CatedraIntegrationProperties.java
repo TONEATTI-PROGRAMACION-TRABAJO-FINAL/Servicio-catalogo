@@ -1,4 +1,4 @@
-package com.toneatti.catalogo.synchronization.infrastructure.config;
+package com.toneatti.catalogo.config;
 
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.Max;

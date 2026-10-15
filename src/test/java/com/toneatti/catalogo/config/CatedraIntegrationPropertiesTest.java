@@ -1,4 +1,4 @@
-package com.toneatti.catalogo.synchronization.infrastructure.config;
+package com.toneatti.catalogo.config;
 
 import org.junit.jupiter.api.Test;
 import org.springframework.boot.context.properties.bind.validation.BindValidationException;
