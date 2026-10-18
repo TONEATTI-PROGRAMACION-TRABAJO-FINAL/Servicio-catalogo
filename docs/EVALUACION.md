@@ -9,7 +9,7 @@
 
 | Aspecto | Resultado |
 |---|---|
-| Índice de calidad | **45/100** |
+| Índice de calidad | **56/100** |
 | Tipo de repositorio | `backend` |
 | Build (`mvnw verify` / `gradlew check`) | OK |
 | Código (LOC) | 845 |
@@ -29,12 +29,12 @@ Criterios de la cátedra (`CRITERIOS-CALIDAD.md`): **Aprobar** se juega con el p
 
 | Semáforo | Resultado |
 |---|---|
-| Aprobar (`estandar`) | **no cumple** — 6/11 |
-| Destacar (`exigente`) | **no cumple** — 4/11 |
+| Aprobar (`estandar`) | **no cumple** — 7/11 |
+| Destacar (`exigente`) | **no cumple** — 5/11 |
 
-**Para aprobar, falta cumplir:** Hexagonal; Duplicación
+**Para aprobar, falta cumplir:** Duplicación
 
-**Para destacar, falta cumplir:** SOLID; POO; Hexagonal; Duplicación
+**Para destacar, falta cumplir:** SOLID; POO; Duplicación
 
 ## 3. Autoría (RepoSense)
 
@@ -51,7 +51,7 @@ Cada dimensión indica **qué mide**, **por qué importa** y **tu resultado**. C
 | Dimensión | Peso | Puntaje |
 |:--|--:|--:|
 | **D1** Diseño OO, SOLID y patrones (20%) | 20% | 9 |
-| **D2** Arquitectura hexagonal — backend (15%) | 15% | 0 |
+| **D2** Arquitectura hexagonal — backend (15%) | 15% | 64 |
 | **D3** Frontend KMP: MVVM y buenas prácticas (10%) | 10% | N/A |
 | **D4** Integración y contrato (10%) | 10% | 0 |
 | **D5** Seguridad y robustez (10%) | 10% | 95 |
@@ -72,11 +72,7 @@ Cada dimensión indica **qué mide**, **por qué importa** y **tu resultado**. C
 
 - **Qué mide:** Separación en capas (dominio, puertos de entrada/salida, adaptadores) y dirección de las dependencias del backend.
 - **Por qué importa:** Aislar el dominio de la infraestructura permite cambiar la base de datos, el framework o el transporte sin tocar las reglas de negocio.
-- **Tu resultado:** **0/100**
-- **Para investigar la causa:**
-    - ¿El dominio importa framework o detalles de persistencia?
-    - ¿Dónde vive la lógica de negocio frente a los controladores?
-    - ¿Se definieron puertos para los servicios que se consumen?
+- **Tu resultado:** **64/100**
 
 ### D4. Integración y contrato (10%)
 
@@ -131,10 +127,7 @@ El análisis encontró las siguientes señales (archivo, sin número de línea a
 **duplicación** (1)
 - duplicación de bloques: 39.9% del código
 
-**hexagonal** (4)
-- domain importa framework/infra: import lombok.*; — `src/main/java/com/toneatti/catalogo/professional/domain/model/Professional.java`
-- domain importa framework/infra: import lombok.*; — `src/main/java/com/toneatti/catalogo/professionalcategory/domain/model/ProfessionalCategory.java`
-- domain importa framework/infra: import lombok.*; — `src/main/java/com/toneatti/catalogo/weeklyschedule/domain/model/WeeklySchedule.java`
+**hexagonal** (1)
 - falta ports/in (hexagonal)
 
 ## 6. Evolución por commit
@@ -146,14 +139,14 @@ xychart-beta
     title "Índice de calidad a lo largo de los commits"
     x-axis ["47087b2", "13c8139", "646e875"]
     y-axis "Índice" 0 --> 100
-    line [0, 15, 27]
+    line [0, 15, 38]
 ```
 
 | # | Fecha | Commit | Autor | LOC | Índice | %POO | Duplic. | Sueltas |
 |---|---|---|---|---:|---:|---:|---:|---:|
 | 1 | 2026-09-10 | `47087b2` | LucianoToneatti | 0 | 0 | 0% | 0.0% | 0 |
 | 2 | 2026-09-15 | `13c8139` | Ing. Daniel Quinteros | 0 | 15 | 0% | 0.0% | 0 |
-| 3 | 2026-10-13 | `646e875` | LucianoToneatti | 845 | 27 | 72% | 39.9% | 0 |
+| 3 | 2026-10-13 | `646e875` | LucianoToneatti | 845 | 38 | 72% | 39.9% | 0 |
 
 ---
 _Informe generado por la cátedra. Las dimensiones y umbrales corresponden a `calidad.py` (perfil `exigente`); el semáforo, a `CRITERIOS-CALIDAD.md`. La documentación del repositorio no se evalúa. Ante dudas, revisá el archivo señalado._
