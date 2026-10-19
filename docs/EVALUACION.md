@@ -3,13 +3,13 @@
 
 > Documento **generado automáticamente** por la cátedra de Programación II (UM): RepoSense + análisis de calidad de **7 dimensiones**. **No editar a mano**: se regenera en cada evaluación.
 > Rama evaluada: `main`. Análisis **heurístico** (regex + métricas) + build: es una criba para orientar la revisión, **no una nota**. La **documentación** del repositorio no se evalúa.
-> Generado: 2026-10-17.
+> Generado: 2026-10-19.
 
 ## 1. Veredicto
 
 | Aspecto | Resultado |
 |---|---|
-| Índice de calidad | **56/100** |
+| Índice de calidad | **57/100** |
 | Tipo de repositorio | `backend` |
 | Build (`mvnw verify` / `gradlew check`) | OK |
 | Código (LOC) | 845 |
@@ -17,9 +17,11 @@
 | Clases | 26 |
 | Código dentro de clases (%POO) | 72% |
 | Funciones fuera de clases | 0 |
-| Duplicación | 39.9% |
+| Duplicación (puerta) | 6.4% |
+| Duplicación lógica | 7.3% |
+| Duplicación de boilerplate | 14.8% |
 | Cobertura | 98% |
-| Tope duro aplicado a D1 | `DUP>=30%` → D1 ≤ 30 |
+| Tope duro aplicado a D1 | `POO_BAJO` → D1 ≤ 60 |
 
 > Este informe **describe** lo que el análisis midió con los criterios ya establecidos de la materia. No es una nota.
 
@@ -50,7 +52,7 @@ Cada dimensión indica **qué mide**, **por qué importa** y **tu resultado**. C
 
 | Dimensión | Peso | Puntaje |
 |:--|--:|--:|
-| **D1** Diseño OO, SOLID y patrones (20%) | 20% | 9 |
+| **D1** Diseño OO, SOLID y patrones (20%) | 20% | 15 |
 | **D2** Arquitectura hexagonal — backend (15%) | 15% | 64 |
 | **D3** Frontend KMP: MVVM y buenas prácticas (10%) | 10% | N/A |
 | **D4** Integración y contrato (10%) | 10% | 0 |
@@ -62,7 +64,7 @@ Cada dimensión indica **qué mide**, **por qué importa** y **tu resultado**. C
 
 - **Qué mide:** Métricas orientadas a objetos (clases, métodos, campos, cohesión, acoplamiento, herencia) y proxies de SOLID, más patrones de diseño.
 - **Por qué importa:** El eje de la materia es el buen uso de la POO y su arquitectura: un diseño con clases claras y poco acopladas es más fácil de entender, probar y cambiar.
-- **Tu resultado:** **9/100**
+- **Tu resultado:** **15/100**
 - **Para investigar la causa:**
     - ¿Se pensó el modelo de clases antes de codificar o se agrupó después?
     - ¿Qué clases concentran muchas responsabilidades a la vez?
@@ -124,8 +126,12 @@ El análisis encontró las siguientes señales (archivo, sin número de línea a
 - clase 'WeeklyScheduleMapperTest' muy acoplada (CBO=8) — `src/test/java/com/toneatti/catalogo/weeklyschedule/infrastructure/persistence/mapper/WeeklyScheduleMapperTest.java`
 - clase 'JpaWeeklyScheduleRepositoryAdapterTest' muy acoplada (CBO=11) — `src/test/java/com/toneatti/catalogo/weeklyschedule/infrastructure/persistence/adapter/JpaWeeklyScheduleRepositoryAdapterTest.java`
 
-**duplicación** (1)
-- duplicación de bloques: 39.9% del código
+**duplicación** (5)
+- duplicación lógica: 6.4% · boilerplate: 14.8%
+- bloque de 8 líneas repetido 2 veces en src/test/java/com/toneatti/catalogo/weeklyschedule/infrastructure/persistence/mapper/WeeklyScheduleMapperTest.java:25, src/test/java/com/toneatti/catalogo/weeklyschedule/infrastructure/persistence/adapter/JpaWeeklyScheduleRepositoryAdapterTest.java:46 — `src/test/java/com/toneatti/catalogo/weeklyschedule/infrastructure/persistence/mapper/WeeklyScheduleMapperTest.java`
+- bloque de 8 líneas repetido 2 veces en src/test/java/com/toneatti/catalogo/professional/infrastructure/persistence/mapper/ProfessionalMapperTest.java:21, src/test/java/com/toneatti/catalogo/professional/infrastructure/persistence/adapter/JpaProfessionalRepositoryAdapterTest.java:42 — `src/test/java/com/toneatti/catalogo/professional/infrastructure/persistence/mapper/ProfessionalMapperTest.java`
+- bloque de 8 líneas repetido 2 veces en src/test/java/com/toneatti/catalogo/weeklyschedule/infrastructure/persistence/mapper/WeeklyScheduleMapperTest.java:23, src/test/java/com/toneatti/catalogo/weeklyschedule/infrastructure/persistence/adapter/JpaWeeklyScheduleRepositoryAdapterTest.java:44 — `src/test/java/com/toneatti/catalogo/weeklyschedule/infrastructure/persistence/mapper/WeeklyScheduleMapperTest.java`
+- bloque de 8 líneas repetido 2 veces en src/test/java/com/toneatti/catalogo/weeklyschedule/infrastructure/persistence/mapper/WeeklyScheduleMapperTest.java:24, src/test/java/com/toneatti/catalogo/weeklyschedule/infrastructure/persistence/adapter/JpaWeeklyScheduleRepositoryAdapterTest.java:45 — `src/test/java/com/toneatti/catalogo/weeklyschedule/infrastructure/persistence/mapper/WeeklyScheduleMapperTest.java`
 
 **hexagonal** (1)
 - falta ports/in (hexagonal)
@@ -139,14 +145,14 @@ xychart-beta
     title "Índice de calidad a lo largo de los commits"
     x-axis ["47087b2", "13c8139", "646e875"]
     y-axis "Índice" 0 --> 100
-    line [0, 15, 38]
+    line [0, 15, 39]
 ```
 
 | # | Fecha | Commit | Autor | LOC | Índice | %POO | Duplic. | Sueltas |
 |---|---|---|---|---:|---:|---:|---:|---:|
 | 1 | 2026-09-10 | `47087b2` | LucianoToneatti | 0 | 0 | 0% | 0.0% | 0 |
 | 2 | 2026-09-15 | `13c8139` | Ing. Daniel Quinteros | 0 | 15 | 0% | 0.0% | 0 |
-| 3 | 2026-10-13 | `646e875` | LucianoToneatti | 845 | 38 | 72% | 39.9% | 0 |
+| 3 | 2026-10-13 | `646e875` | LucianoToneatti | 845 | 39 | 72% | 6.4% | 0 |
 
 ---
 _Informe generado por la cátedra. Las dimensiones y umbrales corresponden a `calidad.py` (perfil `exigente`); el semáforo, a `CRITERIOS-CALIDAD.md`. La documentación del repositorio no se evalúa. Ante dudas, revisá el archivo señalado._
