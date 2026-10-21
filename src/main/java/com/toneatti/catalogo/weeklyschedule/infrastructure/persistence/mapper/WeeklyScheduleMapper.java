@@ -28,16 +28,8 @@ public class WeeklyScheduleMapper {
         if (entity == null) {
             return null;
         }
-        return WeeklySchedule.builder()
-                .id(entity.getId())
-                .professionalId(entity.getProfessionalId())
-                .dayOfWeek(entity.getDayOfWeek())
-                .startTime(entity.getStartTime())
-                .endTime(entity.getEndTime())
-                .slotDurationMinutes(entity.getSlotDurationMinutes())
-                .enabled(entity.getEnabled())
-                .createdAt(entity.getCreatedAt())
-                .updatedAt(entity.getUpdatedAt())
-                .build();
+        return new WeeklySchedule(entity.getId(), entity.getProfessionalId(), entity.getDayOfWeek(),
+                entity.getStartTime(), entity.getEndTime(), entity.getSlotDurationMinutes(),
+                entity.getEnabled(), entity.getCreatedAt(), entity.getUpdatedAt());
     }
 }

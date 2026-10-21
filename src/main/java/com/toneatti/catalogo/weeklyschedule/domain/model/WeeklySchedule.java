@@ -7,9 +7,7 @@ import java.time.LocalTime;
 import lombok.*;
 
 @Getter
-@Setter
 @Builder
-@NoArgsConstructor
 @AllArgsConstructor
 public class WeeklySchedule {
     private Long id;

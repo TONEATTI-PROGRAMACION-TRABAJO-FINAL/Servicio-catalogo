@@ -26,14 +26,7 @@ public class ProfessionalMapper {
         if (entity == null) {
             return null;
         }
-        return Professional.builder()
-                .id(entity.getId())
-                .categoryId(entity.getCategoryId())
-                .firstName(entity.getFirstName())
-                .lastName(entity.getLastName())
-                .enabled(entity.getEnabled())
-                .createdAt(entity.getCreatedAt())
-                .updatedAt(entity.getUpdatedAt())
-                .build();
+        return new Professional(entity.getId(), entity.getCategoryId(), entity.getFirstName(), entity.getLastName(),
+                entity.getEnabled(), entity.getCreatedAt(), entity.getUpdatedAt());
     }
 }

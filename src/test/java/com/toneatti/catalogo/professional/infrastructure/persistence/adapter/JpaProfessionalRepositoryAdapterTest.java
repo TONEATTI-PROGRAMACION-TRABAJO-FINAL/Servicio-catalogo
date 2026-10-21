@@ -11,10 +11,11 @@ import org.mockito.ArgumentCaptor;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
-import java.time.Instant;
 import java.util.List;
 import java.util.Optional;
 
+import static com.toneatti.catalogo.professional.infrastructure.persistence.ProfessionalFixtures.professional;
+import static com.toneatti.catalogo.professional.infrastructure.persistence.ProfessionalFixtures.professionalEntity;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.verify;
@@ -22,9 +23,6 @@ import static org.mockito.Mockito.when;
 
 @ExtendWith(MockitoExtension.class)
 class JpaProfessionalRepositoryAdapterTest {
-
-    private static final Instant CREATED_AT = Instant.parse("2026-07-01T12:00:00Z");
-    private static final Instant UPDATED_AT = Instant.parse("2026-09-10T13:40:00Z");
 
     @Mock
     private JpaProfessionalRepository jpaRepository;
@@ -38,38 +36,23 @@ class JpaProfessionalRepositoryAdapterTest {
 
     @Test
     void saveKeepsTheAssignedIdAndReturnsTheSavedProfessional() {
-        Professional professional = Professional.builder()
-                .id(15L)
-                .categoryId(1L)
-                .firstName("Ana")
-                .lastName("Gomez")
-                .enabled(true)
-                .createdAt(CREATED_AT)
-                .updatedAt(UPDATED_AT)
-                .build();
+        Professional professional = professional(15L, "Ana", true);
         when(jpaRepository.save(any(ProfessionalEntity.class))).thenAnswer(inv -> inv.getArgument(0));
 
         Professional saved = adapter.save(professional);
 
         ArgumentCaptor<ProfessionalEntity> captor = ArgumentCaptor.forClass(ProfessionalEntity.class);
         verify(jpaRepository).save(captor.capture());
-        assertThat(captor.getValue().getId()).isEqualTo(15L);
-        assertThat(saved.getId()).isEqualTo(15L);
-        assertThat(saved.getCategoryId()).isEqualTo(1L);
-        assertThat(saved.getFirstName()).isEqualTo("Ana");
-        assertThat(saved.getEnabled()).isTrue();
-        assertThat(saved.getUpdatedAt()).isEqualTo(UPDATED_AT);
+        assertThat(captor.getValue()).usingRecursiveComparison().isEqualTo(professional);
+        assertThat(saved).usingRecursiveComparison().isEqualTo(professional);
     }
 
     @Test
     void findByIdReturnsTheProfessionalWhenItExists() {
-        when(jpaRepository.findById(15L)).thenReturn(Optional.of(entity(15L, "Ana")));
+        ProfessionalEntity entity = professionalEntity(15L, "Ana", true);
+        when(jpaRepository.findById(15L)).thenReturn(Optional.of(entity));
 
-        Optional<Professional> result = adapter.findById(15L);
-
-        assertThat(result).isPresent();
-        assertThat(result.get().getId()).isEqualTo(15L);
-        assertThat(result.get().getFirstName()).isEqualTo("Ana");
+        assertThat(adapter.findById(15L)).get().usingRecursiveComparison().isEqualTo(entity);
     }
 
     @Test
@@ -81,23 +64,10 @@ class JpaProfessionalRepositoryAdapterTest {
 
     @Test
     void findAllReturnsEveryProfessional() {
-        when(jpaRepository.findAll()).thenReturn(List.of(entity(15L, "Ana"), entity(16L, "Juan")));
+        List<ProfessionalEntity> entities = List.of(
+                professionalEntity(15L, "Ana", true), professionalEntity(16L, "Juan", false));
+        when(jpaRepository.findAll()).thenReturn(entities);
 
-        List<Professional> result = adapter.findAll();
-
-        assertThat(result).extracting(Professional::getId).containsExactly(15L, 16L);
-        assertThat(result).extracting(Professional::getFirstName).containsExactly("Ana", "Juan");
-    }
-
-    private static ProfessionalEntity entity(Long id, String firstName) {
-        return ProfessionalEntity.builder()
-                .id(id)
-                .categoryId(1L)
-                .firstName(firstName)
-                .lastName("Gomez")
-                .enabled(true)
-                .createdAt(CREATED_AT)
-                .updatedAt(UPDATED_AT)
-                .build();
+        assertThat(adapter.findAll()).usingRecursiveComparison().isEqualTo(entities);
     }
 }

@@ -12,11 +12,11 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
 import java.time.DayOfWeek;
-import java.time.Instant;
-import java.time.LocalTime;
 import java.util.List;
 import java.util.Optional;
 
+import static com.toneatti.catalogo.weeklyschedule.infrastructure.persistence.WeeklyScheduleFixtures.weeklySchedule;
+import static com.toneatti.catalogo.weeklyschedule.infrastructure.persistence.WeeklyScheduleFixtures.weeklyScheduleEntity;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.verify;
@@ -24,9 +24,6 @@ import static org.mockito.Mockito.when;
 
 @ExtendWith(MockitoExtension.class)
 class JpaWeeklyScheduleRepositoryAdapterTest {
-
-    private static final Instant CREATED_AT = Instant.parse("2026-07-01T12:00:00Z");
-    private static final Instant UPDATED_AT = Instant.parse("2026-09-10T13:40:00Z");
 
     @Mock
     private JpaWeeklyScheduleRepository jpaRepository;
@@ -40,43 +37,23 @@ class JpaWeeklyScheduleRepositoryAdapterTest {
 
     @Test
     void saveKeepsTheAssignedIdAndReturnsTheSavedWeeklySchedule() {
-        WeeklySchedule weeklySchedule = WeeklySchedule.builder()
-                .id(21L)
-                .professionalId(15L)
-                .dayOfWeek(DayOfWeek.MONDAY)
-                .startTime(LocalTime.of(9, 0))
-                .endTime(LocalTime.of(12, 0))
-                .slotDurationMinutes(30)
-                .enabled(true)
-                .createdAt(CREATED_AT)
-                .updatedAt(UPDATED_AT)
-                .build();
+        WeeklySchedule weeklySchedule = weeklySchedule(21L, DayOfWeek.MONDAY, true);
         when(jpaRepository.save(any(WeeklyScheduleEntity.class))).thenAnswer(inv -> inv.getArgument(0));
 
         WeeklySchedule saved = adapter.save(weeklySchedule);
 
         ArgumentCaptor<WeeklyScheduleEntity> captor = ArgumentCaptor.forClass(WeeklyScheduleEntity.class);
         verify(jpaRepository).save(captor.capture());
-        assertThat(captor.getValue().getId()).isEqualTo(21L);
-        assertThat(saved.getId()).isEqualTo(21L);
-        assertThat(saved.getProfessionalId()).isEqualTo(15L);
-        assertThat(saved.getDayOfWeek()).isEqualTo(DayOfWeek.MONDAY);
-        assertThat(saved.getStartTime()).isEqualTo(LocalTime.of(9, 0));
-        assertThat(saved.getEndTime()).isEqualTo(LocalTime.of(12, 0));
-        assertThat(saved.getSlotDurationMinutes()).isEqualTo(30);
-        assertThat(saved.getEnabled()).isTrue();
-        assertThat(saved.getUpdatedAt()).isEqualTo(UPDATED_AT);
+        assertThat(captor.getValue()).usingRecursiveComparison().isEqualTo(weeklySchedule);
+        assertThat(saved).usingRecursiveComparison().isEqualTo(weeklySchedule);
     }
 
     @Test
     void findByIdReturnsTheWeeklyScheduleWhenItExists() {
-        when(jpaRepository.findById(21L)).thenReturn(Optional.of(entity(21L, DayOfWeek.MONDAY)));
+        WeeklyScheduleEntity entity = weeklyScheduleEntity(21L, DayOfWeek.MONDAY, true);
+        when(jpaRepository.findById(21L)).thenReturn(Optional.of(entity));
 
-        Optional<WeeklySchedule> result = adapter.findById(21L);
-
-        assertThat(result).isPresent();
-        assertThat(result.get().getId()).isEqualTo(21L);
-        assertThat(result.get().getDayOfWeek()).isEqualTo(DayOfWeek.MONDAY);
+        assertThat(adapter.findById(21L)).get().usingRecursiveComparison().isEqualTo(entity);
     }
 
     @Test
@@ -88,25 +65,10 @@ class JpaWeeklyScheduleRepositoryAdapterTest {
 
     @Test
     void findAllReturnsEveryWeeklySchedule() {
-        when(jpaRepository.findAll()).thenReturn(List.of(entity(21L, DayOfWeek.MONDAY), entity(22L, DayOfWeek.TUESDAY)));
+        List<WeeklyScheduleEntity> entities = List.of(
+                weeklyScheduleEntity(21L, DayOfWeek.MONDAY, true), weeklyScheduleEntity(22L, DayOfWeek.TUESDAY, false));
+        when(jpaRepository.findAll()).thenReturn(entities);
 
-        List<WeeklySchedule> result = adapter.findAll();
-
-        assertThat(result).extracting(WeeklySchedule::getId).containsExactly(21L, 22L);
-        assertThat(result).extracting(WeeklySchedule::getDayOfWeek).containsExactly(DayOfWeek.MONDAY, DayOfWeek.TUESDAY);
-    }
-
-    private static WeeklyScheduleEntity entity(Long id, DayOfWeek dayOfWeek) {
-        return WeeklyScheduleEntity.builder()
-                .id(id)
-                .professionalId(15L)
-                .dayOfWeek(dayOfWeek)
-                .startTime(LocalTime.of(9, 0))
-                .endTime(LocalTime.of(12, 0))
-                .slotDurationMinutes(30)
-                .enabled(true)
-                .createdAt(CREATED_AT)
-                .updatedAt(UPDATED_AT)
-                .build();
+        assertThat(adapter.findAll()).usingRecursiveComparison().isEqualTo(entities);
     }
 }

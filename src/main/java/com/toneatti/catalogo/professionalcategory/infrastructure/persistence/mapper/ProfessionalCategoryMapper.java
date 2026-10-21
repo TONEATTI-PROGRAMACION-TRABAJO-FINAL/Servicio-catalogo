@@ -25,13 +25,7 @@ public class ProfessionalCategoryMapper {
         if (entity == null) {
             return null;
         }
-        return ProfessionalCategory.builder()
-                .id(entity.getId())
-                .name(entity.getName())
-                .description(entity.getDescription())
-                .enabled(entity.getEnabled())
-                .createdAt(entity.getCreatedAt())
-                .updatedAt(entity.getUpdatedAt())
-                .build();
+        return new ProfessionalCategory(entity.getId(), entity.getName(), entity.getDescription(),
+                entity.getEnabled(), entity.getCreatedAt(), entity.getUpdatedAt());
     }
 }
