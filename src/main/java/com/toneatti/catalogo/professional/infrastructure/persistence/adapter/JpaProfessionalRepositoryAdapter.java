@@ -39,4 +39,11 @@ public class JpaProfessionalRepositoryAdapter implements ProfessionalRepository 
                 .map(professionalMapper::toDomainModel)
                 .collect(Collectors.toList());
     }
+
+    @Override
+    public List<Professional> findByCategoryId(Long categoryId) {
+        return jpaProfessionalRepository.findByCategoryId(categoryId).stream()
+                .map(professionalMapper::toDomainModel)
+                .collect(Collectors.toList());
+    }
 }
