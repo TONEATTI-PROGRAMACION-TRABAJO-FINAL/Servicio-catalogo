@@ -10,5 +10,6 @@ public interface WeeklyScheduleRepository {
     WeeklySchedule save(WeeklySchedule weeklySchedule);
     Optional<WeeklySchedule> findById(Long id);
     List<WeeklySchedule> findAll();
+    List<WeeklySchedule> findByProfessionalId(Long professionalId);
 
 }

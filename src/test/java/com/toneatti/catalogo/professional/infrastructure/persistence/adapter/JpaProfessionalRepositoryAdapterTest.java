@@ -70,4 +70,12 @@ class JpaProfessionalRepositoryAdapterTest {
 
         assertThat(adapter.findAll()).usingRecursiveComparison().isEqualTo(entities);
     }
+
+    @Test
+    void findByCategoryIdReturnsTheProfessionalsOfThatCategory() {
+        List<ProfessionalEntity> entities = List.of(professionalEntity(15L, "Ana", true));
+        when(jpaRepository.findByCategoryId(7L)).thenReturn(entities);
+
+        assertThat(adapter.findByCategoryId(7L)).usingRecursiveComparison().isEqualTo(entities);
+    }
 }
