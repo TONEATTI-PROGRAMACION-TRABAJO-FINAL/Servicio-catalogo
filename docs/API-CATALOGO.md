@@ -12,7 +12,7 @@ En el flujo de reserva (sección 17 de la referencia), turnos le pide a catálog
 
 ## Convenciones
 
-- URL base: la del servicio, puerto por defecto `8080`. Rutas sin prefijo.
+- URL base: `http://<host>:8081` por defecto (configurable con `CATALOGO_SERVER_PORT`). Rutas sin prefijo.
 - Solo lectura: todos los endpoints son `GET`.
 - JSON con propiedades en `camelCase`.
 - Horas locales de atención en formato `HH:mm:ss`.
