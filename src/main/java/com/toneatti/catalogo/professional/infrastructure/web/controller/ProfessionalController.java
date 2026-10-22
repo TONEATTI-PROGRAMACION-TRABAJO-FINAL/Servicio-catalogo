@@ -15,6 +15,8 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.server.ResponseStatusException;
 
+import java.util.List;
+
 @Tag(name = "Professionals")
 @RestController
 @RequestMapping("/professionals")
@@ -32,5 +34,14 @@ public class ProfessionalController {
         } catch (ProfessionalException e) {
             throw new ResponseStatusException(HttpStatus.NOT_FOUND);
         }
+    }
+
+    @Operation(summary = "List the enabled professionals")
+    @GetMapping
+    public ResponseEntity<List<ProfessionalResponse>> getAllProfessionals() {
+        List<ProfessionalResponse> responses = professionalService.getAllProfessionals().stream()
+                .map(professionalDtoMapper::toResponse)
+                .toList();
+        return ResponseEntity.ok(responses);
     }
 }

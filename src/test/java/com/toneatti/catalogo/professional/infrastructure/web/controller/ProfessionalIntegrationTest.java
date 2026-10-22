@@ -7,6 +7,8 @@ import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.test.web.servlet.MockMvc;
 
+import java.util.List;
+
 import static com.toneatti.catalogo.professional.infrastructure.persistence.ProfessionalFixtures.professionalEntity;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
@@ -39,6 +41,18 @@ class ProfessionalIntegrationTest {
                 .andExpect(jsonPath("$.enabled").value(false))
                 .andExpect(jsonPath("$.createdAt").doesNotExist())
                 .andExpect(jsonPath("$.updatedAt").doesNotExist());
+    }
+
+    @Test
+    void listsOnlyTheEnabledProfessionals() throws Exception {
+        jpaProfessionalRepository.saveAll(List.of(
+                professionalEntity(15L, "Ana", false), professionalEntity(16L, "Juan", true)));
+
+        mockMvc.perform(get("/professionals"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.length()").value(1))
+                .andExpect(jsonPath("$[0].id").value(16))
+                .andExpect(jsonPath("$[0].firstName").value("Juan"));
     }
 
     @Test
