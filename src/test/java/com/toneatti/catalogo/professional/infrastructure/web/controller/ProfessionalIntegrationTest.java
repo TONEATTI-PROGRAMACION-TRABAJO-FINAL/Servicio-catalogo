@@ -6,10 +6,12 @@ import com.toneatti.catalogo.professional.infrastructure.persistence.repository.
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpStatus;
 import org.springframework.test.web.servlet.MockMvc;
 
 import java.util.List;
 
+import static com.toneatti.catalogo.ProblemDetailsMatchers.problem;
 import static com.toneatti.catalogo.professional.infrastructure.persistence.ProfessionalFixtures.professionalEntity;
 import static org.hamcrest.Matchers.contains;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
@@ -81,18 +83,18 @@ class ProfessionalIntegrationTest {
     @Test
     void returnsBadRequestForANonNumericCategoryId() throws Exception {
         mockMvc.perform(get("/professionals").param("categoryId", "abc"))
-                .andExpect(status().isBadRequest());
+                .andExpect(problem(HttpStatus.BAD_REQUEST));
     }
 
     @Test
     void returnsNotFoundForAnUnknownId() throws Exception {
         mockMvc.perform(get("/professionals/99"))
-                .andExpect(status().isNotFound());
+                .andExpect(problem(HttpStatus.NOT_FOUND));
     }
 
     @Test
     void returnsBadRequestForANonNumericId() throws Exception {
         mockMvc.perform(get("/professionals/abc"))
-                .andExpect(status().isBadRequest());
+                .andExpect(problem(HttpStatus.BAD_REQUEST));
     }
 }

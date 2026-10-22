@@ -6,11 +6,13 @@ import com.toneatti.catalogo.weeklyschedule.infrastructure.persistence.repositor
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpStatus;
 import org.springframework.test.web.servlet.MockMvc;
 
 import java.time.DayOfWeek;
 import java.util.List;
 
+import static com.toneatti.catalogo.ProblemDetailsMatchers.problem;
 import static com.toneatti.catalogo.weeklyschedule.infrastructure.persistence.WeeklyScheduleFixtures.weeklyScheduleEntity;
 import static org.hamcrest.Matchers.contains;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
@@ -60,6 +62,6 @@ class WeeklyScheduleIntegrationTest {
     @Test
     void returnsBadRequestWithoutProfessionalId() throws Exception {
         mockMvc.perform(get("/weekly-schedules"))
-                .andExpect(status().isBadRequest());
+                .andExpect(problem(HttpStatus.BAD_REQUEST));
     }
 }
