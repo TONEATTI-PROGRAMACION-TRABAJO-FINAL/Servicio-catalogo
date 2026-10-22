@@ -71,4 +71,12 @@ class JpaWeeklyScheduleRepositoryAdapterTest {
 
         assertThat(adapter.findAll()).usingRecursiveComparison().isEqualTo(entities);
     }
+
+    @Test
+    void findByProfessionalIdReturnsTheSchedulesOfThatProfessional() {
+        List<WeeklyScheduleEntity> entities = List.of(weeklyScheduleEntity(21L, DayOfWeek.MONDAY, true));
+        when(jpaRepository.findByProfessionalId(15L)).thenReturn(entities);
+
+        assertThat(adapter.findByProfessionalId(15L)).usingRecursiveComparison().isEqualTo(entities);
+    }
 }
