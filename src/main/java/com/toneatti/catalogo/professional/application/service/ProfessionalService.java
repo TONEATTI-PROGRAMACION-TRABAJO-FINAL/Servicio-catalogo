@@ -4,6 +4,7 @@ import com.toneatti.catalogo.professional.application.exception.ProfessionalExce
 import com.toneatti.catalogo.professional.domain.model.Professional;
 import com.toneatti.catalogo.professional.domain.ports.in.GetAllProfessionalsUseCase;
 import com.toneatti.catalogo.professional.domain.ports.in.GetProfessionalByIdUseCase;
+import com.toneatti.catalogo.professional.domain.ports.in.GetProfessionalsByCategoryUseCase;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
@@ -15,6 +16,7 @@ public class ProfessionalService {
 
     private final GetProfessionalByIdUseCase getProfessionalByIdUseCase;
     private final GetAllProfessionalsUseCase getAllProfessionalsUseCase;
+    private final GetProfessionalsByCategoryUseCase getProfessionalsByCategoryUseCase;
 
     public Professional getProfessionalById(Long id) {
         return getProfessionalByIdUseCase.getProfessionalById(id)
@@ -23,5 +25,9 @@ public class ProfessionalService {
 
     public List<Professional> getAllProfessionals() {
         return getAllProfessionalsUseCase.getAllProfessionals();
+    }
+
+    public List<Professional> getProfessionalsByCategory(Long categoryId) {
+        return getProfessionalsByCategoryUseCase.getProfessionalsByCategory(categoryId);
     }
 }

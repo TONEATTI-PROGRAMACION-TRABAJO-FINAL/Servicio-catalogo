@@ -2,6 +2,7 @@ package com.toneatti.catalogo.professional.infrastructure.web.controller;
 
 import com.toneatti.catalogo.professional.application.exception.ProfessionalException;
 import com.toneatti.catalogo.professional.application.service.ProfessionalService;
+import com.toneatti.catalogo.professional.domain.model.Professional;
 import com.toneatti.catalogo.professional.infrastructure.web.dto.ProfessionalResponse;
 import com.toneatti.catalogo.professional.infrastructure.web.mapper.ProfessionalDtoMapper;
 import io.swagger.v3.oas.annotations.Operation;
@@ -12,6 +13,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.server.ResponseStatusException;
 
@@ -36,12 +38,14 @@ public class ProfessionalController {
         }
     }
 
-    @Operation(summary = "List the enabled professionals")
+    @Operation(summary = "List the enabled professionals, optionally filtered by category")
     @GetMapping
-    public ResponseEntity<List<ProfessionalResponse>> getAllProfessionals() {
-        List<ProfessionalResponse> responses = professionalService.getAllProfessionals().stream()
+    public ResponseEntity<List<ProfessionalResponse>> getProfessionals(@RequestParam(required = false) Long categoryId) {
+        List<Professional> professionals = categoryId == null
+                ? professionalService.getAllProfessionals()
+                : professionalService.getProfessionalsByCategory(categoryId);
+        return ResponseEntity.ok(professionals.stream()
                 .map(professionalDtoMapper::toResponse)
-                .toList();
-        return ResponseEntity.ok(responses);
+                .toList());
     }
 }

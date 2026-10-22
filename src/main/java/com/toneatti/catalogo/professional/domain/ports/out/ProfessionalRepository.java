@@ -10,5 +10,6 @@ public interface ProfessionalRepository {
     Professional save(Professional professional);
     Optional<Professional> findById(Long id);
     List<Professional> findAll();
+    List<Professional> findByCategoryId(Long categoryId);
 
 }
