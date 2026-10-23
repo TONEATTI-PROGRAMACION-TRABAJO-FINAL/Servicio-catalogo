@@ -13,10 +13,13 @@ Copia local del catálogo de la cátedra (categorías, profesionales y horarios 
 
 El servicio se integra con el servicio central de la cátedra (REST, Redis y Kafka). Los datos de conexión se leen **solo de variables de entorno**: no hay valores reales en el código ni en el repositorio.
 
+El servicio escucha en el puerto **8081** (Servicio-turnos usa el 8080). Para cambiarlo, definir `CATALOGO_SERVER_PORT`.
+
 ### Variables
 
 | Variable | Propiedad | De dónde sale |
 | --- | --- | --- |
+| `CATALOGO_SERVER_PORT` | `server.port` | Opcional, por defecto `8081` |
 | `CATEDRA_API_BASE_URL` | `catedra.api-base-url` | URL base de la API REST, la envía la cátedra |
 | `CATEDRA_JWT` | `catedra.jwt` | `id_token` de la cuenta técnica (registro o login) |
 | `CATEDRA_REDIS_HOST` | `catedra.redis.host` | `integration.redisHost` |
@@ -30,7 +33,7 @@ El servicio se integra con el servicio central de la cátedra (REST, Redis y Kaf
 
 Los campos `integration.*` los devuelven `POST /api/student/register`, `POST /api/authenticate` y `GET /api/student/integration`.
 
-Todas son obligatorias. Si falta alguna, la aplicación no arranca y muestra `APPLICATION FAILED TO START` con la lista de propiedades faltantes.
+Salvo `CATALOGO_SERVER_PORT`, todas son obligatorias. Si falta alguna, la aplicación no arranca y muestra `APPLICATION FAILED TO START` con la lista de propiedades faltantes.
 
 ### Pasos
 
