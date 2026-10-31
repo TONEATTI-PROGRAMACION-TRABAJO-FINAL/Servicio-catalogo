@@ -26,7 +26,8 @@ En el flujo de reserva (sección 17 de la referencia), turnos le pide a catálog
 El catálogo guarda una copia local que incluye entidades habilitadas y deshabilitadas, tal como las entrega la cátedra.
 
 - **Los listados devuelven solo las habilitadas.** Un profesional, una categoría o un horario deshabilitado no puede ofrecerse para reservar.
-- **`GET /professionals/{id}` devuelve el profesional aunque esté deshabilitado**, con el campo `enabled`. Turnos puede tener reservas anteriores de un profesional que después se deshabilitó y necesita mostrar su nombre; con el flag decide si lo ofrece o no.
+- **Un profesional es reservable si él y su categoría están habilitados.** `GET /professionals` excluye a los profesionales habilitados de una categoría deshabilitada, y también a los de una categoría que todavía no está en la copia local.
+- **`GET /professionals/{id}` devuelve el profesional aunque esté deshabilitado**, con el campo `enabled`. Turnos puede tener reservas anteriores de un profesional que después se deshabilitó y necesita mostrar su nombre; con el flag decide si lo ofrece o no. `enabled` refleja solo al profesional, no a su categoría: para saber si es reservable, turnos se basa en el listado.
 
 ## Endpoints
 
@@ -50,7 +51,7 @@ Si no hay categorías habilitadas, devuelve `200 OK` con `[]`.
 
 ### `GET /professionals`
 
-Lista los profesionales habilitados. Con `categoryId`, solo los de esa categoría.
+Lista los profesionales reservables: habilitados y de una categoría habilitada. Con `categoryId`, solo los de esa categoría.
 
 | Parámetro | Ubicación | Tipo | Obligatorio |
 | --- | --- | --- | --- |
@@ -70,11 +71,11 @@ Respuesta `200 OK`:
 ]
 ```
 
-Una categoría sin profesionales habilitados, o inexistente, devuelve `200 OK` con `[]`. Catálogo no distingue esos dos casos: el filtro sin resultados es una respuesta válida.
+Una categoría deshabilitada, inexistente o sin profesionales habilitados devuelve `200 OK` con `[]`. Catálogo no distingue esos casos: el filtro sin resultados es una respuesta válida.
 
 ### `GET /professionals/{id}`
 
-Devuelve un profesional, habilitado o no.
+Devuelve un profesional, habilitado o no, aunque su categoría esté deshabilitada.
 
 | Parámetro | Ubicación | Tipo | Obligatorio |
 | --- | --- | --- | --- |
