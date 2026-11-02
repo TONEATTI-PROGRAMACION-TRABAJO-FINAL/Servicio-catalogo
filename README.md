@@ -22,6 +22,8 @@ El servicio escucha en el puerto **8081** (Servicio-turnos usa el 8080). Para ca
 | `CATALOGO_SERVER_PORT` | `server.port` | Opcional, por defecto `8081` |
 | `CATEDRA_API_BASE_URL` | `catedra.api-base-url` | URL base de la API REST, la envía la cátedra |
 | `CATEDRA_JWT` | `catedra.jwt` | `id_token` de la cuenta técnica (registro o login) |
+| `CATEDRA_CONNECT_TIMEOUT` | `catedra.connect-timeout` | Opcional, por defecto `PT2S` (duración ISO-8601) |
+| `CATEDRA_READ_TIMEOUT` | `catedra.read-timeout` | Opcional, por defecto `PT10S`: el snapshot es la respuesta más pesada |
 | `CATEDRA_REDIS_HOST` | `catedra.redis.host` | `integration.redisHost` |
 | `CATEDRA_REDIS_PORT` | `catedra.redis.port` | `integration.redisPort` |
 | `CATEDRA_REDIS_USERNAME` | `catedra.redis.username` | `integration.redisUsername` |
@@ -33,7 +35,7 @@ El servicio escucha en el puerto **8081** (Servicio-turnos usa el 8080). Para ca
 
 Los campos `integration.*` los devuelven `POST /api/student/register`, `POST /api/authenticate` y `GET /api/student/integration`.
 
-Salvo `CATALOGO_SERVER_PORT`, todas son obligatorias. Si falta alguna, la aplicación no arranca y muestra `APPLICATION FAILED TO START` con la lista de propiedades faltantes.
+Salvo `CATALOGO_SERVER_PORT` y los dos timeouts, todas son obligatorias. Si falta alguna, la aplicación no arranca y muestra `APPLICATION FAILED TO START` con la lista de propiedades faltantes.
 
 ### Pasos
 
