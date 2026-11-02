@@ -7,6 +7,7 @@ import com.toneatti.catalogo.weeklyschedule.infrastructure.persistence.mapper.We
 import com.toneatti.catalogo.weeklyschedule.infrastructure.persistence.repository.JpaWeeklyScheduleRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 import java.util.Optional;
@@ -45,5 +46,13 @@ public class JpaWeeklyScheduleRepositoryAdapter implements WeeklyScheduleReposit
         return jpaWeeklyScheduleRepository.findByProfessionalId(professionalId).stream()
                 .map(weeklyScheduleMapper::toDomainModel)
                 .collect(Collectors.toList());
+    }
+
+    // With an empty list deleteByIdNotIn deletes every row. Joins the caller's transaction when there is one.
+    @Override
+    @Transactional
+    public void replaceAll(List<WeeklySchedule> weeklySchedules) {
+        jpaWeeklyScheduleRepository.saveAll(weeklySchedules.stream().map(weeklyScheduleMapper::toEntity).toList());
+        jpaWeeklyScheduleRepository.deleteByIdNotIn(weeklySchedules.stream().map(WeeklySchedule::getId).toList());
     }
 }

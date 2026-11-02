@@ -10,5 +10,7 @@ public interface ProfessionalCategoryRepository {
     ProfessionalCategory save(ProfessionalCategory professionalCategory);
     Optional<ProfessionalCategory> findById(Long id);
     List<ProfessionalCategory> findAll();
+    // Leaves exactly these categories: saves them with their ids and deletes the ones not in the list
+    void replaceAll(List<ProfessionalCategory> professionalCategories);
 
 }
