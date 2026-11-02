@@ -24,6 +24,10 @@ El servicio escucha en el puerto **8081** (Servicio-turnos usa el 8080). Para ca
 | `CATEDRA_JWT` | `catedra.jwt` | `id_token` de la cuenta técnica (registro o login) |
 | `CATEDRA_CONNECT_TIMEOUT` | `catedra.connect-timeout` | Opcional, por defecto `PT2S` (duración ISO-8601) |
 | `CATEDRA_READ_TIMEOUT` | `catedra.read-timeout` | Opcional, por defecto `PT10S`: el snapshot es la respuesta más pesada |
+| `CATEDRA_SYNC_SNAPSHOT_ON_STARTUP` | `catedra.sync.snapshot-on-startup` | Opcional, por defecto `true` |
+| `CATEDRA_SYNC_MAX_ATTEMPTS` | `catedra.sync.max-attempts` | Opcional, por defecto `8` intentos en total |
+| `CATEDRA_SYNC_INITIAL_BACKOFF` | `catedra.sync.initial-backoff` | Opcional, por defecto `PT2S`; la espera se duplica en cada reintento |
+| `CATEDRA_SYNC_MAX_BACKOFF` | `catedra.sync.max-backoff` | Opcional, por defecto `PT60S` |
 | `CATEDRA_REDIS_HOST` | `catedra.redis.host` | `integration.redisHost` |
 | `CATEDRA_REDIS_PORT` | `catedra.redis.port` | `integration.redisPort` |
 | `CATEDRA_REDIS_USERNAME` | `catedra.redis.username` | `integration.redisUsername` |
@@ -35,7 +39,14 @@ El servicio escucha en el puerto **8081** (Servicio-turnos usa el 8080). Para ca
 
 Los campos `integration.*` los devuelven `POST /api/student/register`, `POST /api/authenticate` y `GET /api/student/integration`.
 
-Salvo `CATALOGO_SERVER_PORT` y los dos timeouts, todas son obligatorias. Si falta alguna, la aplicación no arranca y muestra `APPLICATION FAILED TO START` con la lista de propiedades faltantes.
+Salvo `CATALOGO_SERVER_PORT`, los dos timeouts y las `CATEDRA_SYNC_*`, todas son obligatorias. Si falta alguna, la aplicación no arranca y muestra `APPLICATION FAILED TO START` con la lista de propiedades faltantes.
+
+### Carga del catálogo al arrancar
+
+Si no hay versión local (la base es en memoria, así que pasa en cada arranque), el servicio pide `GET /api/synchronization/snapshot` a la cátedra y reemplaza la copia local con las tres colecciones y la versión en una sola transacción. El log muestra `Catalog snapshot version N applied: ...`.
+
+- Si la cátedra no responde (timeout, conexión rechazada, 5xx), el servicio arranca igual, escribe un WARN por intento y reintenta con espera exponencial hasta `CATEDRA_SYNC_MAX_ATTEMPTS`. Al rendirse escribe un ERROR. Mientras tanto la API devuelve listas vacías.
+- Si responde 401 o 403, el JWT técnico no sirve: escribe un ERROR que pide revisar `CATEDRA_JWT` y no reintenta.
 
 ### Pasos
 
