@@ -28,6 +28,8 @@ El servicio escucha en el puerto **8081** (Servicio-turnos usa el 8080). Para ca
 | `CATEDRA_SYNC_MAX_ATTEMPTS` | `catedra.sync.max-attempts` | Opcional, por defecto `8` intentos en total |
 | `CATEDRA_SYNC_INITIAL_BACKOFF` | `catedra.sync.initial-backoff` | Opcional, por defecto `PT2S`; la espera se duplica en cada reintento |
 | `CATEDRA_SYNC_MAX_BACKOFF` | `catedra.sync.max-backoff` | Opcional, por defecto `PT60S` |
+| `CATEDRA_SYNC_POLL_ENABLED` | `catedra.sync.poll-enabled` | Opcional, por defecto `true` |
+| `CATEDRA_SYNC_POLL_INTERVAL` | `catedra.sync.poll-interval` | Opcional, por defecto `PT1M` |
 | `CATEDRA_REDIS_HOST` | `catedra.redis.host` | `integration.redisHost` |
 | `CATEDRA_REDIS_PORT` | `catedra.redis.port` | `integration.redisPort` |
 | `CATEDRA_REDIS_USERNAME` | `catedra.redis.username` | `integration.redisUsername` |
@@ -45,7 +47,7 @@ Salvo `CATALOGO_SERVER_PORT`, los timeouts y las `CATEDRA_SYNC_*`, todas son obl
 
 ### Sincronización del catálogo
 
-Al arrancar, el servicio compara su versión local con las de la cátedra (secciones 14 y 18.2 del contrato):
+Al arrancar, y después cada `CATEDRA_SYNC_POLL_INTERVAL` (por defecto un minuto), el servicio compara su versión local con las de la cátedra (secciones 14 y 18.2 del contrato). La comparación periódica es la que recupera el atraso si se pierde una notificación (sección 16); si falla, el siguiente intervalo es el reintento. Dos sincronizaciones nunca corren a la vez.
 
 | Estado | Acción |
 | --- | --- |

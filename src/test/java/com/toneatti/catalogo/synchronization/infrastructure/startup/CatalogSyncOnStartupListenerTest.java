@@ -33,6 +33,7 @@ class CatalogSyncOnStartupListenerTest {
 
     private CatalogSyncOnStartupListener listener(boolean onStartup) {
         return new CatalogSyncOnStartupListener(service,
-                new CatalogSyncProperties(onStartup, 8, Duration.ofSeconds(2), Duration.ofSeconds(60)));
+                new CatalogSyncProperties(onStartup, 8, Duration.ofSeconds(2), Duration.ofSeconds(60), false,
+                        Duration.ofMinutes(1)));
     }
 }
