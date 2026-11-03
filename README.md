@@ -32,14 +32,16 @@ El servicio escucha en el puerto **8081** (Servicio-turnos usa el 8080). Para ca
 | `CATEDRA_REDIS_PORT` | `catedra.redis.port` | `integration.redisPort` |
 | `CATEDRA_REDIS_USERNAME` | `catedra.redis.username` | `integration.redisUsername` |
 | `CATEDRA_REDIS_PASSWORD` | `catedra.redis.password` | `integration.redisPassword` |
-| `CATEDRA_REDIS_READ_NAMESPACE` | `catedra.redis.read-namespace` | `integration.redisReadNamespace` |
+| `CATEDRA_REDIS_READ_NAMESPACE` | `catedra.redis.read-namespace` | `integration.redisReadNamespace` (patrón terminado en `:*`, por ejemplo `catedra:sync:*`) |
+| `CATEDRA_REDIS_CONNECT_TIMEOUT` | `catedra.redis.connect-timeout` | Opcional, por defecto `PT2S` |
+| `CATEDRA_REDIS_COMMAND_TIMEOUT` | `catedra.redis.command-timeout` | Opcional, por defecto `PT2S` por comando |
 | `CATEDRA_KAFKA_BOOTSTRAP_SERVERS` | `catedra.kafka.bootstrap-servers` | `integration.kafkaBootstrapServers` |
 | `CATEDRA_KAFKA_CONSUMER_GROUP_ID` | `catedra.kafka.consumer-group-id` | `integration.kafkaConsumerGroupId` |
 | `CATEDRA_KAFKA_CATALOG_TOPIC` | `catedra.kafka.catalog-topic` | `integration.kafkaCatalogTopic` |
 
 Los campos `integration.*` los devuelven `POST /api/student/register`, `POST /api/authenticate` y `GET /api/student/integration`.
 
-Salvo `CATALOGO_SERVER_PORT`, los dos timeouts y las `CATEDRA_SYNC_*`, todas son obligatorias. Si falta alguna, la aplicación no arranca y muestra `APPLICATION FAILED TO START` con la lista de propiedades faltantes.
+Salvo `CATALOGO_SERVER_PORT`, los timeouts y las `CATEDRA_SYNC_*`, todas son obligatorias. Si falta alguna, la aplicación no arranca y muestra `APPLICATION FAILED TO START` con la lista de propiedades faltantes.
 
 ### Carga del catálogo al arrancar
 

@@ -210,7 +210,8 @@ class RestCatedraRepositoryAdapterTest {
     private static RestCatedraRepositoryAdapter adapterFor(String baseUrl) {
         CatedraIntegrationProperties properties = new CatedraIntegrationProperties(baseUrl, JWT,
                 Duration.ofSeconds(1), READ_TIMEOUT,
-                new CatedraIntegrationProperties.Redis("localhost", 6379, "grp_test", "test-redis-password", "ns"),
+                new CatedraIntegrationProperties.Redis("localhost", 6379, "grp_test", "test-redis-password",
+                        "catedra:sync:*", Duration.ofSeconds(2), Duration.ofSeconds(2)),
                 new CatedraIntegrationProperties.Kafka("localhost:9092", "alumnos-test", "catedra.catalog.test"));
         return new RestCatedraRepositoryAdapter(new CatedraRestClientConfig().catedraRestClient(properties),
                 new CatedraSnapshotMapper(new CatedraCatalogItemMapper()));

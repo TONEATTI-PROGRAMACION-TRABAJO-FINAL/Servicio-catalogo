@@ -42,6 +42,9 @@ class CatedraIntegrationPropertiesTest {
             assertThat(properties.redis().username()).isEqualTo("grp_test");
             assertThat(properties.redis().password()).isEqualTo("test-redis-password");
             assertThat(properties.redis().readNamespace()).isEqualTo("catedra:sync:*");
+            assertThat(properties.redis().keyPrefix()).isEqualTo("catedra:sync:");
+            assertThat(properties.redis().connectTimeout()).isEqualTo(Duration.ofSeconds(2));
+            assertThat(properties.redis().commandTimeout()).isEqualTo(Duration.ofSeconds(2));
             assertThat(properties.kafka().bootstrapServers()).isEqualTo("localhost:9092");
             assertThat(properties.kafka().consumerGroupId()).isEqualTo("alumnos-test");
             assertThat(properties.kafka().catalogTopic()).isEqualTo("catedra.catalog.test");
@@ -87,14 +90,27 @@ class CatedraIntegrationPropertiesTest {
     @Test
     void bindsTheTimeoutsFromEnvironmentVariables() {
         contextRunner.withInitializer(context -> TestPropertyValues
-                        .of("CATEDRA_CONNECT_TIMEOUT=PT1S", "CATEDRA_READ_TIMEOUT=PT0.5S")
+                        .of("CATEDRA_CONNECT_TIMEOUT=PT1S", "CATEDRA_READ_TIMEOUT=PT0.5S",
+                        "CATEDRA_REDIS_CONNECT_TIMEOUT=PT3S", "CATEDRA_REDIS_COMMAND_TIMEOUT=PT0.25S")
                         .applyTo(context.getEnvironment(), TestPropertyValues.Type.SYSTEM_ENVIRONMENT))
                 .run(context -> {
                     CatedraIntegrationProperties properties = context.getBean(CatedraIntegrationProperties.class);
 
                     assertThat(properties.connectTimeout()).isEqualTo(Duration.ofSeconds(1));
                     assertThat(properties.readTimeout()).isEqualTo(Duration.ofMillis(500));
+                    assertThat(properties.redis().connectTimeout()).isEqualTo(Duration.ofSeconds(3));
+                    assertThat(properties.redis().commandTimeout()).isEqualTo(Duration.ofMillis(250));
                 });
+    }
+
+    @Test
+    void failsWhenTheReadNamespaceIsNotAKeyPattern() {
+        assertFailsOn("redis.readNamespace", "catedra.redis.read-namespace=catedra:sync");
+    }
+
+    @Test
+    void failsWhenTheRedisCommandTimeoutIsNotPositive() {
+        assertFailsOn("redis.commandTimeout", "catedra.redis.command-timeout=PT0S");
     }
 
     @Test
@@ -113,7 +129,8 @@ class CatedraIntegrationPropertiesTest {
             String text = context.getBean(CatedraIntegrationProperties.class).toString();
 
             assertThat(text).doesNotContain("test-jwt", "test-redis-password");
-            assertThat(text).contains("http://localhost:8089", "localhost:9092", "readTimeout=PT10S");
+            assertThat(text).contains("http://localhost:8089", "localhost:9092", "readTimeout=PT10S",
+                    "commandTimeout=PT2S");
         });
     }
 
