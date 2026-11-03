@@ -19,14 +19,16 @@ class CatalogSyncPropertiesTest {
             .withUserConfiguration(TestConfig.class);
 
     @Test
-    void loadsTheSnapshotOnStartupWithEightAttemptsByDefault() {
+    void synchronizesOnStartupWithEightAttemptsByDefault() {
         contextRunner.run(context -> {
             CatalogSyncProperties properties = context.getBean(CatalogSyncProperties.class);
 
-            assertThat(properties.snapshotOnStartup()).isTrue();
+            assertThat(properties.onStartup()).isTrue();
             assertThat(properties.maxAttempts()).isEqualTo(8);
             assertThat(properties.initialBackoff()).isEqualTo(Duration.ofSeconds(2));
             assertThat(properties.maxBackoff()).isEqualTo(Duration.ofSeconds(60));
+            assertThat(properties.pollEnabled()).isTrue();
+            assertThat(properties.pollInterval()).isEqualTo(Duration.ofMinutes(1));
         });
     }
 
@@ -34,16 +36,24 @@ class CatalogSyncPropertiesTest {
     @Test
     void bindsEverySettingFromEnvironmentVariables() {
         contextRunner.withInitializer(context -> TestPropertyValues
-                        .of("CATEDRA_SYNC_SNAPSHOT_ON_STARTUP=false", "CATEDRA_SYNC_MAX_ATTEMPTS=3",
-                                "CATEDRA_SYNC_INITIAL_BACKOFF=PT0.5S", "CATEDRA_SYNC_MAX_BACKOFF=PT5S")
+                        .of("CATEDRA_SYNC_ON_STARTUP=false", "CATEDRA_SYNC_MAX_ATTEMPTS=3",
+                                "CATEDRA_SYNC_INITIAL_BACKOFF=PT0.5S", "CATEDRA_SYNC_MAX_BACKOFF=PT5S",
+                                "CATEDRA_SYNC_POLL_ENABLED=false", "CATEDRA_SYNC_POLL_INTERVAL=PT30S")
                         .applyTo(context.getEnvironment(), TestPropertyValues.Type.SYSTEM_ENVIRONMENT))
                 .run(context -> assertThat(context.getBean(CatalogSyncProperties.class))
-                        .isEqualTo(new CatalogSyncProperties(false, 3, Duration.ofMillis(500), Duration.ofSeconds(5))));
+                        .isEqualTo(new CatalogSyncProperties(false, 3, Duration.ofMillis(500), Duration.ofSeconds(5),
+                                false, Duration.ofSeconds(30))));
     }
 
     @Test
     void failsWithoutAtLeastOneAttempt() {
         contextRunner.withPropertyValues("catedra.sync.max-attempts=0")
+                .run(context -> assertThat(context).hasFailed());
+    }
+
+    @Test
+    void failsWhenThePollIntervalIsNotPositive() {
+        contextRunner.withPropertyValues("catedra.sync.poll-interval=PT0S")
                 .run(context -> assertThat(context).hasFailed());
     }
 

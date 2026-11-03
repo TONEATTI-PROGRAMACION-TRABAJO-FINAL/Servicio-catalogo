@@ -24,28 +24,42 @@ El servicio escucha en el puerto **8081** (Servicio-turnos usa el 8080). Para ca
 | `CATEDRA_JWT` | `catedra.jwt` | `id_token` de la cuenta técnica (registro o login) |
 | `CATEDRA_CONNECT_TIMEOUT` | `catedra.connect-timeout` | Opcional, por defecto `PT2S` (duración ISO-8601) |
 | `CATEDRA_READ_TIMEOUT` | `catedra.read-timeout` | Opcional, por defecto `PT10S`: el snapshot es la respuesta más pesada |
-| `CATEDRA_SYNC_SNAPSHOT_ON_STARTUP` | `catedra.sync.snapshot-on-startup` | Opcional, por defecto `true` |
+| `CATEDRA_SYNC_ON_STARTUP` | `catedra.sync.on-startup` | Opcional, por defecto `true`: sincroniza el catálogo al arrancar |
 | `CATEDRA_SYNC_MAX_ATTEMPTS` | `catedra.sync.max-attempts` | Opcional, por defecto `8` intentos en total |
 | `CATEDRA_SYNC_INITIAL_BACKOFF` | `catedra.sync.initial-backoff` | Opcional, por defecto `PT2S`; la espera se duplica en cada reintento |
 | `CATEDRA_SYNC_MAX_BACKOFF` | `catedra.sync.max-backoff` | Opcional, por defecto `PT60S` |
+| `CATEDRA_SYNC_POLL_ENABLED` | `catedra.sync.poll-enabled` | Opcional, por defecto `true` |
+| `CATEDRA_SYNC_POLL_INTERVAL` | `catedra.sync.poll-interval` | Opcional, por defecto `PT1M` |
 | `CATEDRA_REDIS_HOST` | `catedra.redis.host` | `integration.redisHost` |
 | `CATEDRA_REDIS_PORT` | `catedra.redis.port` | `integration.redisPort` |
 | `CATEDRA_REDIS_USERNAME` | `catedra.redis.username` | `integration.redisUsername` |
 | `CATEDRA_REDIS_PASSWORD` | `catedra.redis.password` | `integration.redisPassword` |
-| `CATEDRA_REDIS_READ_NAMESPACE` | `catedra.redis.read-namespace` | `integration.redisReadNamespace` |
+| `CATEDRA_REDIS_READ_NAMESPACE` | `catedra.redis.read-namespace` | `integration.redisReadNamespace` (patrón terminado en `:*`, por ejemplo `catedra:sync:*`) |
+| `CATEDRA_REDIS_CONNECT_TIMEOUT` | `catedra.redis.connect-timeout` | Opcional, por defecto `PT2S` |
+| `CATEDRA_REDIS_COMMAND_TIMEOUT` | `catedra.redis.command-timeout` | Opcional, por defecto `PT2S` por comando |
 | `CATEDRA_KAFKA_BOOTSTRAP_SERVERS` | `catedra.kafka.bootstrap-servers` | `integration.kafkaBootstrapServers` |
 | `CATEDRA_KAFKA_CONSUMER_GROUP_ID` | `catedra.kafka.consumer-group-id` | `integration.kafkaConsumerGroupId` |
 | `CATEDRA_KAFKA_CATALOG_TOPIC` | `catedra.kafka.catalog-topic` | `integration.kafkaCatalogTopic` |
 
 Los campos `integration.*` los devuelven `POST /api/student/register`, `POST /api/authenticate` y `GET /api/student/integration`.
 
-Salvo `CATALOGO_SERVER_PORT`, los dos timeouts y las `CATEDRA_SYNC_*`, todas son obligatorias. Si falta alguna, la aplicación no arranca y muestra `APPLICATION FAILED TO START` con la lista de propiedades faltantes.
+Salvo `CATALOGO_SERVER_PORT`, los timeouts y las `CATEDRA_SYNC_*`, todas son obligatorias. Si falta alguna, la aplicación no arranca y muestra `APPLICATION FAILED TO START` con la lista de propiedades faltantes.
 
-### Carga del catálogo al arrancar
+### Sincronización del catálogo
 
-Si no hay versión local (la base es en memoria, así que pasa en cada arranque), el servicio pide `GET /api/synchronization/snapshot` a la cátedra y reemplaza la copia local con las tres colecciones y la versión en una sola transacción. El log muestra `Catalog snapshot version N applied: ...`.
+Al arrancar, y después cada `CATEDRA_SYNC_POLL_INTERVAL` (por defecto un minuto), el servicio compara su versión local con las de la cátedra (secciones 14 y 18.2 del contrato). La comparación periódica es la que recupera el atraso si se pierde una notificación (sección 16); si falla, el siguiente intervalo es el reintento. Dos sincronizaciones nunca corren a la vez.
 
-- Si la cátedra no responde (timeout, conexión rechazada, 5xx), el servicio arranca igual, escribe un WARN por intento y reintenta con espera exponencial hasta `CATEDRA_SYNC_MAX_ATTEMPTS`. Al rendirse escribe un ERROR. Mientras tanto la API devuelve listas vacías.
+| Estado | Acción |
+| --- | --- |
+| Sin versión local (la base es en memoria, así que pasa en cada arranque) | Snapshot por REST, sin leer Redis |
+| Local menor que `catedra:sync:oldest-available-version` | Snapshot (no se intenta `changes:{oldest}`) |
+| Local mayor que `catedra:sync:current-version` | Snapshot, con un WARN: la cátedra reconstruyó su historial |
+| Local igual a la actual | Nada |
+| Otro caso | `changes:{local+1}` a `changes:{actual}` desde Redis, en orden |
+
+El snapshot reemplaza la copia local con las tres colecciones y la versión en una sola transacción (`Catalog snapshot version N applied: ...`). Cada versión incremental se aplica en su propia transacción junto con el avance de la versión local (`Catalog version N applied: ...`); si una falla, no queda aplicada a medias y no se aplican las siguientes. Si los cambios de Redis no se pueden usar (falta `changes:{v}`, un id no está en su Hash o el JSON es inválido), se carga el snapshot una vez.
+
+- Si la cátedra o Redis no responden (timeout, conexión rechazada, 5xx), el servicio arranca igual, escribe un WARN por intento y reintenta con espera exponencial hasta `CATEDRA_SYNC_MAX_ATTEMPTS`. Al rendirse escribe un ERROR. Mientras tanto la API devuelve la última copia local.
 - Si responde 401 o 403, el JWT técnico no sirve: escribe un ERROR que pide revisar `CATEDRA_JWT` y no reintenta.
 
 ### Pasos
