@@ -14,10 +14,11 @@ import org.springframework.stereotype.Component;
 import java.time.Duration;
 
 /**
- * Loads the catalog snapshot when the application is ready and there is no local version yet.
+ * Synchronizes the catalog when the application is ready: the snapshot without a local version, otherwise the
+ * changes in Redis or the snapshot, as the service decides.
  * The service starts even if the cátedra cannot be reached: the first attempt runs right away and the retries,
  * with exponential backoff and a limit, run in a background thread. A rejected JWT is not retried.
- * Getting the snapshot has no effects in the cátedra, so retrying it is safe (section 18.4).
+ * Reading the catalog has no effects in the cátedra, so retrying it is safe (section 18.4).
  */
 @Slf4j
 @Component
@@ -31,7 +32,7 @@ public class SnapshotOnStartupListener {
 
     @EventListener(ApplicationReadyEvent.class)
     public void loadSnapshotOnStartup() {
-        if (!catalogSyncProperties.snapshotOnStartup() || catalogSynchronizationService.hasCatalogVersion()) {
+        if (!catalogSyncProperties.snapshotOnStartup()) {
             return;
         }
         if (!attempt(1)) {
@@ -62,24 +63,24 @@ public class SnapshotOnStartupListener {
             }
             backoff = min(backoff.multipliedBy(2), catalogSyncProperties.maxBackoff());
         }
-        log.error("Catalog snapshot not loaded after {} attempts: the API answers empty lists until the next "
+        log.error("Catalog not synchronized after {} attempts: the API answers the last local copy until the next "
                 + "synchronization", maxAttempts);
     }
 
-    // True when there is nothing left to retry: the snapshot was applied or the JWT was rejected.
+    // True when there is nothing left to retry: the catalog was synchronized or the JWT was rejected.
     private boolean attempt(int attempt) {
         try {
-            catalogSynchronizationService.synchronizeCatalogFromSnapshot();
+            catalogSynchronizationService.synchronizeCatalog();
             return true;
         } catch (CatedraAuthenticationException e) {
-            log.error("Catalog snapshot not loaded, check CATEDRA_JWT ({}). Not retrying", e.getMessage());
+            log.error("Catalog not synchronized, check CATEDRA_JWT ({}). Not retrying", e.getMessage());
             return true;
         } catch (CatedraUnavailableException e) {
-            log.warn("Catalog snapshot attempt {}/{} failed: {}", attempt, catalogSyncProperties.maxAttempts(),
+            log.warn("Catalog synchronization attempt {}/{} failed: {}", attempt, catalogSyncProperties.maxAttempts(),
                     e.getMessage());
             return false;
         } catch (RuntimeException e) {
-            log.warn("Catalog snapshot attempt {}/{} failed unexpectedly", attempt,
+            log.warn("Catalog synchronization attempt {}/{} failed unexpectedly", attempt,
                     catalogSyncProperties.maxAttempts(), e);
             return false;
         }

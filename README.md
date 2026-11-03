@@ -43,11 +43,21 @@ Los campos `integration.*` los devuelven `POST /api/student/register`, `POST /ap
 
 Salvo `CATALOGO_SERVER_PORT`, los timeouts y las `CATEDRA_SYNC_*`, todas son obligatorias. Si falta alguna, la aplicación no arranca y muestra `APPLICATION FAILED TO START` con la lista de propiedades faltantes.
 
-### Carga del catálogo al arrancar
+### Sincronización del catálogo
 
-Si no hay versión local (la base es en memoria, así que pasa en cada arranque), el servicio pide `GET /api/synchronization/snapshot` a la cátedra y reemplaza la copia local con las tres colecciones y la versión en una sola transacción. El log muestra `Catalog snapshot version N applied: ...`.
+Al arrancar, el servicio compara su versión local con las de la cátedra (secciones 14 y 18.2 del contrato):
 
-- Si la cátedra no responde (timeout, conexión rechazada, 5xx), el servicio arranca igual, escribe un WARN por intento y reintenta con espera exponencial hasta `CATEDRA_SYNC_MAX_ATTEMPTS`. Al rendirse escribe un ERROR. Mientras tanto la API devuelve listas vacías.
+| Estado | Acción |
+| --- | --- |
+| Sin versión local (la base es en memoria, así que pasa en cada arranque) | Snapshot por REST, sin leer Redis |
+| Local menor que `catedra:sync:oldest-available-version` | Snapshot (no se intenta `changes:{oldest}`) |
+| Local mayor que `catedra:sync:current-version` | Snapshot, con un WARN: la cátedra reconstruyó su historial |
+| Local igual a la actual | Nada |
+| Otro caso | `changes:{local+1}` a `changes:{actual}` desde Redis, en orden |
+
+El snapshot reemplaza la copia local con las tres colecciones y la versión en una sola transacción (`Catalog snapshot version N applied: ...`). Cada versión incremental se aplica en su propia transacción junto con el avance de la versión local (`Catalog version N applied: ...`); si una falla, no queda aplicada a medias y no se aplican las siguientes. Si los cambios de Redis no se pueden usar (falta `changes:{v}`, un id no está en su Hash o el JSON es inválido), se carga el snapshot una vez.
+
+- Si la cátedra o Redis no responden (timeout, conexión rechazada, 5xx), el servicio arranca igual, escribe un WARN por intento y reintenta con espera exponencial hasta `CATEDRA_SYNC_MAX_ATTEMPTS`. Al rendirse escribe un ERROR. Mientras tanto la API devuelve la última copia local.
 - Si responde 401 o 403, el JWT técnico no sirve: escribe un ERROR que pide revisar `CATEDRA_JWT` y no reintenta.
 
 ### Pasos

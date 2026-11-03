@@ -10,7 +10,6 @@ import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoInteractions;
-import static org.mockito.Mockito.when;
 
 class SnapshotOnStartupListenerTest {
 
@@ -23,12 +22,12 @@ class SnapshotOnStartupListenerTest {
         verifyNoInteractions(service);
     }
 
+    // The service decides between the snapshot and the changes in Redis
     @Test
-    void doesNotSynchronizeWhenThereIsAlreadyALocalVersion() {
-        when(service.hasCatalogVersion()).thenReturn(true);
-
+    void synchronizesThroughTheServiceDecision() {
         listener(true).loadSnapshotOnStartup();
 
+        verify(service).synchronizeCatalog();
         verify(service, never()).synchronizeCatalogFromSnapshot();
     }
 

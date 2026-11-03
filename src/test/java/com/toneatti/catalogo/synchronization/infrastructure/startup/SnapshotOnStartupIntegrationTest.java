@@ -65,7 +65,8 @@ class SnapshotOnStartupIntegrationTest {
         await().atMost(WAIT).until(() -> versions().findCurrentVersion().isPresent());
         assertThat(versions().findCurrentVersion()).contains(SNAPSHOT_VERSION);
         assertThat(catedra.requestCount(SNAPSHOT_PATH)).isEqualTo(3);
-        assertThat(output).contains("Catalog snapshot attempt 1/8 failed", "Catalog snapshot attempt 2/8 failed",
+        assertThat(output).contains("Catalog synchronization attempt 1/8 failed",
+                "Catalog synchronization attempt 2/8 failed",
                 "Catalog snapshot version 7 applied");
     }
 
@@ -75,7 +76,7 @@ class SnapshotOnStartupIntegrationTest {
 
         start(3);
 
-        await().atMost(WAIT).until(() -> output.getOut().contains("Catalog snapshot not loaded after 3 attempts"));
+        await().atMost(WAIT).until(() -> output.getOut().contains("Catalog not synchronized after 3 attempts"));
         assertThat(catedra.requestCount(SNAPSHOT_PATH)).isEqualTo(3);
         assertThat(context.isRunning()).isTrue();
         assertThat(versions().findCurrentVersion()).isEmpty();
