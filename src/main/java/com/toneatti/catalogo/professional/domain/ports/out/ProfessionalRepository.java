@@ -11,5 +11,7 @@ public interface ProfessionalRepository {
     Optional<Professional> findById(Long id);
     List<Professional> findAll();
     List<Professional> findByCategoryId(Long categoryId);
+    // Leaves exactly these professionals: saves them with their ids and deletes the ones not in the list
+    void replaceAll(List<Professional> professionals);
 
 }

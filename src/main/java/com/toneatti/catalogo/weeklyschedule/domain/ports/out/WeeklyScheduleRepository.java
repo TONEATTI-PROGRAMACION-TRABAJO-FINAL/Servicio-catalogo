@@ -11,5 +11,7 @@ public interface WeeklyScheduleRepository {
     Optional<WeeklySchedule> findById(Long id);
     List<WeeklySchedule> findAll();
     List<WeeklySchedule> findByProfessionalId(Long professionalId);
+    // Leaves exactly these schedules: saves them with their ids and deletes the ones not in the list
+    void replaceAll(List<WeeklySchedule> weeklySchedules);
 
 }

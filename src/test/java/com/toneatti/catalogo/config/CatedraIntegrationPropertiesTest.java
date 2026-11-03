@@ -3,8 +3,11 @@ package com.toneatti.catalogo.config;
 import org.junit.jupiter.api.Test;
 import org.springframework.boot.context.properties.bind.validation.BindValidationException;
 import org.springframework.boot.test.context.runner.ApplicationContextRunner;
+import org.springframework.boot.test.util.TestPropertyValues;
 import org.springframework.core.NestedExceptionUtils;
 import org.springframework.validation.FieldError;
+
+import java.time.Duration;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -32,6 +35,8 @@ class CatedraIntegrationPropertiesTest {
 
             assertThat(properties.apiBaseUrl()).isEqualTo("http://localhost:8089");
             assertThat(properties.jwt()).isEqualTo("test-jwt");
+            assertThat(properties.connectTimeout()).isEqualTo(Duration.ofSeconds(2));
+            assertThat(properties.readTimeout()).isEqualTo(Duration.ofSeconds(10));
             assertThat(properties.redis().host()).isEqualTo("localhost");
             assertThat(properties.redis().port()).isEqualTo(6379);
             assertThat(properties.redis().username()).isEqualTo("grp_test");
@@ -78,13 +83,37 @@ class CatedraIntegrationPropertiesTest {
         assertFailsOn("kafka.catalogTopic", "catedra.kafka.catalog-topic=");
     }
 
+    // The variables documented in application.properties and .env.example, through the same relaxed binding.
+    @Test
+    void bindsTheTimeoutsFromEnvironmentVariables() {
+        contextRunner.withInitializer(context -> TestPropertyValues
+                        .of("CATEDRA_CONNECT_TIMEOUT=PT1S", "CATEDRA_READ_TIMEOUT=PT0.5S")
+                        .applyTo(context.getEnvironment(), TestPropertyValues.Type.SYSTEM_ENVIRONMENT))
+                .run(context -> {
+                    CatedraIntegrationProperties properties = context.getBean(CatedraIntegrationProperties.class);
+
+                    assertThat(properties.connectTimeout()).isEqualTo(Duration.ofSeconds(1));
+                    assertThat(properties.readTimeout()).isEqualTo(Duration.ofMillis(500));
+                });
+    }
+
+    @Test
+    void failsWhenTheConnectTimeoutIsNotPositive() {
+        assertFailsOn("connectTimeout", "catedra.connect-timeout=PT0S");
+    }
+
+    @Test
+    void failsWhenTheReadTimeoutIsNotPositive() {
+        assertFailsOn("readTimeout", "catedra.read-timeout=PT0S");
+    }
+
     @Test
     void toStringMasksTheSecrets() {
         contextRunner.run(context -> {
             String text = context.getBean(CatedraIntegrationProperties.class).toString();
 
             assertThat(text).doesNotContain("test-jwt", "test-redis-password");
-            assertThat(text).contains("http://localhost:8089", "localhost:9092");
+            assertThat(text).contains("http://localhost:8089", "localhost:9092", "readTimeout=PT10S");
         });
     }
 

@@ -7,6 +7,7 @@ import com.toneatti.catalogo.professional.infrastructure.persistence.mapper.Prof
 import com.toneatti.catalogo.professional.infrastructure.persistence.repository.JpaProfessionalRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 import java.util.Optional;
@@ -45,5 +46,13 @@ public class JpaProfessionalRepositoryAdapter implements ProfessionalRepository 
         return jpaProfessionalRepository.findByCategoryId(categoryId).stream()
                 .map(professionalMapper::toDomainModel)
                 .collect(Collectors.toList());
+    }
+
+    // With an empty list deleteByIdNotIn deletes every row. Joins the caller's transaction when there is one.
+    @Override
+    @Transactional
+    public void replaceAll(List<Professional> professionals) {
+        jpaProfessionalRepository.saveAll(professionals.stream().map(professionalMapper::toEntity).toList());
+        jpaProfessionalRepository.deleteByIdNotIn(professionals.stream().map(Professional::getId).toList());
     }
 }
