@@ -24,7 +24,7 @@ El servicio escucha en el puerto **8081** (Servicio-turnos usa el 8080). Para ca
 | `CATEDRA_JWT` | `catedra.jwt` | `id_token` de la cuenta técnica (registro o login) |
 | `CATEDRA_CONNECT_TIMEOUT` | `catedra.connect-timeout` | Opcional, por defecto `PT2S` (duración ISO-8601) |
 | `CATEDRA_READ_TIMEOUT` | `catedra.read-timeout` | Opcional, por defecto `PT10S`: el snapshot es la respuesta más pesada |
-| `CATEDRA_SYNC_SNAPSHOT_ON_STARTUP` | `catedra.sync.snapshot-on-startup` | Opcional, por defecto `true` |
+| `CATEDRA_SYNC_ON_STARTUP` | `catedra.sync.on-startup` | Opcional, por defecto `true`: sincroniza el catálogo al arrancar |
 | `CATEDRA_SYNC_MAX_ATTEMPTS` | `catedra.sync.max-attempts` | Opcional, por defecto `8` intentos en total |
 | `CATEDRA_SYNC_INITIAL_BACKOFF` | `catedra.sync.initial-backoff` | Opcional, por defecto `PT2S`; la espera se duplica en cada reintento |
 | `CATEDRA_SYNC_MAX_BACKOFF` | `catedra.sync.max-backoff` | Opcional, por defecto `PT60S` |

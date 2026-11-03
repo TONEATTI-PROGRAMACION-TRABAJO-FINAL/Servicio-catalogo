@@ -27,7 +27,7 @@ import static org.awaitility.Awaitility.await;
  * when the application is ready. Each start gets its own in-memory database and no web server.
  */
 @ExtendWith(OutputCaptureExtension.class)
-class SnapshotOnStartupIntegrationTest {
+class CatalogSyncOnStartupIntegrationTest {
 
     private static final String SERVICE_UNAVAILABLE = "{\"status\":503}";
     private static final Duration WAIT = Duration.ofSeconds(10);
@@ -104,7 +104,7 @@ class SnapshotOnStartupIntegrationTest {
                 // As arguments, so they win over application.properties (builder properties are only defaults)
                 .run("--spring.datasource.url=jdbc:h2:mem:startup-" + UUID.randomUUID(),
                         "--catedra.api-base-url=" + catedra.baseUrl(),
-                        "--catedra.sync.snapshot-on-startup=true",
+                        "--catedra.sync.on-startup=true",
                         "--catedra.sync.max-attempts=" + maxAttempts,
                         "--catedra.sync.initial-backoff=PT0.05S",
                         "--catedra.sync.max-backoff=PT0.1S");

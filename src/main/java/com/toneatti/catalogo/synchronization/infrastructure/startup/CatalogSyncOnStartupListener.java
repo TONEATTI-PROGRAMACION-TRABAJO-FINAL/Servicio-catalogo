@@ -23,7 +23,7 @@ import java.time.Duration;
 @Slf4j
 @Component
 @RequiredArgsConstructor
-public class SnapshotOnStartupListener {
+public class CatalogSyncOnStartupListener {
 
     private final CatalogSynchronizationService catalogSynchronizationService;
     private final CatalogSyncProperties catalogSyncProperties;
@@ -31,8 +31,8 @@ public class SnapshotOnStartupListener {
     private volatile Thread retries;
 
     @EventListener(ApplicationReadyEvent.class)
-    public void loadSnapshotOnStartup() {
-        if (!catalogSyncProperties.snapshotOnStartup()) {
+    public void synchronizeOnStartup() {
+        if (!catalogSyncProperties.onStartup()) {
             return;
         }
         if (!attempt(1)) {

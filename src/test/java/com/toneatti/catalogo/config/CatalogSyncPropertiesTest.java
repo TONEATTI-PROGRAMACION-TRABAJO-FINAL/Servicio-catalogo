@@ -19,11 +19,11 @@ class CatalogSyncPropertiesTest {
             .withUserConfiguration(TestConfig.class);
 
     @Test
-    void loadsTheSnapshotOnStartupWithEightAttemptsByDefault() {
+    void synchronizesOnStartupWithEightAttemptsByDefault() {
         contextRunner.run(context -> {
             CatalogSyncProperties properties = context.getBean(CatalogSyncProperties.class);
 
-            assertThat(properties.snapshotOnStartup()).isTrue();
+            assertThat(properties.onStartup()).isTrue();
             assertThat(properties.maxAttempts()).isEqualTo(8);
             assertThat(properties.initialBackoff()).isEqualTo(Duration.ofSeconds(2));
             assertThat(properties.maxBackoff()).isEqualTo(Duration.ofSeconds(60));
@@ -34,7 +34,7 @@ class CatalogSyncPropertiesTest {
     @Test
     void bindsEverySettingFromEnvironmentVariables() {
         contextRunner.withInitializer(context -> TestPropertyValues
-                        .of("CATEDRA_SYNC_SNAPSHOT_ON_STARTUP=false", "CATEDRA_SYNC_MAX_ATTEMPTS=3",
+                        .of("CATEDRA_SYNC_ON_STARTUP=false", "CATEDRA_SYNC_MAX_ATTEMPTS=3",
                                 "CATEDRA_SYNC_INITIAL_BACKOFF=PT0.5S", "CATEDRA_SYNC_MAX_BACKOFF=PT5S")
                         .applyTo(context.getEnvironment(), TestPropertyValues.Type.SYSTEM_ENVIRONMENT))
                 .run(context -> assertThat(context.getBean(CatalogSyncProperties.class))
