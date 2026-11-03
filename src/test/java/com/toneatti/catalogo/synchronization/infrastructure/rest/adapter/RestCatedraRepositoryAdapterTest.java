@@ -9,6 +9,7 @@ import com.toneatti.catalogo.synchronization.domain.exception.CatedraUnavailable
 import com.toneatti.catalogo.synchronization.domain.model.CatalogSnapshot;
 import com.toneatti.catalogo.synchronization.infrastructure.rest.config.CatedraRestClientConfig;
 import com.toneatti.catalogo.synchronization.infrastructure.rest.mapper.CatedraSnapshotMapper;
+import com.toneatti.catalogo.synchronization.infrastructure.shared.mapper.CatedraCatalogItemMapper;
 import com.toneatti.catalogo.weeklyschedule.domain.model.WeeklySchedule;
 import org.assertj.core.api.AbstractThrowableAssert;
 import org.junit.jupiter.api.AfterEach;
@@ -212,6 +213,6 @@ class RestCatedraRepositoryAdapterTest {
                 new CatedraIntegrationProperties.Redis("localhost", 6379, "grp_test", "test-redis-password", "ns"),
                 new CatedraIntegrationProperties.Kafka("localhost:9092", "alumnos-test", "catedra.catalog.test"));
         return new RestCatedraRepositoryAdapter(new CatedraRestClientConfig().catedraRestClient(properties),
-                new CatedraSnapshotMapper());
+                new CatedraSnapshotMapper(new CatedraCatalogItemMapper()));
     }
 }
