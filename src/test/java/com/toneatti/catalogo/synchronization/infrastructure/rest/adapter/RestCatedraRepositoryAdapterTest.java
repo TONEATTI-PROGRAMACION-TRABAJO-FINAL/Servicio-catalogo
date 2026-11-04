@@ -1,6 +1,7 @@
 package com.toneatti.catalogo.synchronization.infrastructure.rest.adapter;
 
 import com.toneatti.catalogo.config.CatedraIntegrationProperties;
+import com.toneatti.catalogo.config.CatedraKafkaTestProperties;
 import com.toneatti.catalogo.professional.domain.model.Professional;
 import com.toneatti.catalogo.professionalcategory.domain.model.ProfessionalCategory;
 import com.toneatti.catalogo.support.FakeHttpServer;
@@ -212,7 +213,7 @@ class RestCatedraRepositoryAdapterTest {
                 Duration.ofSeconds(1), READ_TIMEOUT,
                 new CatedraIntegrationProperties.Redis("localhost", 6379, "grp_test", "test-redis-password",
                         "catedra:sync:*", Duration.ofSeconds(2), Duration.ofSeconds(2)),
-                new CatedraIntegrationProperties.Kafka("localhost:9092", "alumnos-test", "catedra.catalog.test"));
+                CatedraKafkaTestProperties.KAFKA);
         return new RestCatedraRepositoryAdapter(new CatedraRestClientConfig().catedraRestClient(properties),
                 new CatedraSnapshotMapper(new CatedraCatalogItemMapper()));
     }

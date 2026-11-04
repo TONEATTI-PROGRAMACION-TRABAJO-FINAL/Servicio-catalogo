@@ -15,9 +15,10 @@ import org.springframework.stereotype.Component;
 import java.time.Duration;
 
 /**
- * Compares the local version with the cátedra every poll interval and applies what is missing. Kafka (C8) only
- * notifies; this keeps a lost notification from leaving the catalog behind (section 16). The first run waits one
- * interval, so it does not race the synchronization at startup; two runs never overlap, the service skips one.
+ * Compares the local version with the cátedra every poll interval and applies what is missing. Kafka
+ * (CatalogUpdatedListener) only notifies; this keeps a lost notification from leaving the catalog behind
+ * (section 16). The first run waits one interval, so it does not race the synchronization at startup; two runs never
+ * overlap, the service skips one.
  * A failure is only logged: the next interval is the retry.
  */
 @Slf4j

@@ -63,9 +63,19 @@ public record CatedraIntegrationProperties(
         }
     }
 
+    /**
+     * The consumer of {@code catalogTopic}. The contract gives no Kafka credentials, so {@code securityProtocol}
+     * defaults to PLAINTEXT. A message whose processing fails is retried for {@code retryMaxElapsedTime};
+     * {@code listenerEnabled} false leaves the consumer stopped, for tests.
+     */
     public record Kafka(
             @NotBlank String bootstrapServers,
             @NotBlank String consumerGroupId,
-            @NotBlank String catalogTopic) {
+            @NotBlank String catalogTopic,
+            @NotNull @Pattern(regexp = "PLAINTEXT|SSL|SASL_PLAINTEXT|SASL_SSL") @DefaultValue("PLAINTEXT")
+            String securityProtocol,
+            @NotNull @Pattern(regexp = "earliest|latest") @DefaultValue("earliest") String autoOffsetReset,
+            @NotNull @DurationMin(millis = 1) @DefaultValue("PT2M") Duration retryMaxElapsedTime,
+            @DefaultValue("true") boolean listenerEnabled) {
     }
 }
