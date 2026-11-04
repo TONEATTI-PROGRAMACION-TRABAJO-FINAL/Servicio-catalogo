@@ -40,10 +40,11 @@ El servicio escucha en el puerto **8081** (Servicio-turnos usa el 8080). Para ca
 | `CATEDRA_KAFKA_BOOTSTRAP_SERVERS` | `catedra.kafka.bootstrap-servers` | `integration.kafkaBootstrapServers` |
 | `CATEDRA_KAFKA_CONSUMER_GROUP_ID` | `catedra.kafka.consumer-group-id` | `integration.kafkaConsumerGroupId` |
 | `CATEDRA_KAFKA_CATALOG_TOPIC` | `catedra.kafka.catalog-topic` | `integration.kafkaCatalogTopic` |
+| `CATEDRA_KAFKA_PROCESSED_EVENTS_RETENTION` | `catedra.kafka.processed-events-retention` | Opcional, por defecto `P7D`: cuánto se guardan los `eventId` procesados para reconocer un `CatalogUpdated` repetido |
 
 Los campos `integration.*` los devuelven `POST /api/student/register`, `POST /api/authenticate` y `GET /api/student/integration`.
 
-Salvo `CATALOGO_SERVER_PORT`, los timeouts y las `CATEDRA_SYNC_*`, todas son obligatorias. Si falta alguna, la aplicación no arranca y muestra `APPLICATION FAILED TO START` con la lista de propiedades faltantes.
+Salvo `CATALOGO_SERVER_PORT`, los timeouts, las `CATEDRA_SYNC_*` y `CATEDRA_KAFKA_PROCESSED_EVENTS_RETENTION`, todas son obligatorias. Si falta alguna, la aplicación no arranca y muestra `APPLICATION FAILED TO START` con la lista de propiedades faltantes.
 
 ### Sincronización del catálogo
 
