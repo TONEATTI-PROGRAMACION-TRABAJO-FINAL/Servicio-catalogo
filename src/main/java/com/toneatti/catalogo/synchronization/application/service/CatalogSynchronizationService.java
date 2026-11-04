@@ -1,20 +1,27 @@
 package com.toneatti.catalogo.synchronization.application.service;
 
 import com.toneatti.catalogo.synchronization.domain.exception.CatalogIncrementUnusableException;
+import com.toneatti.catalogo.synchronization.domain.exception.CatalogSynchronizationPendingException;
+import com.toneatti.catalogo.synchronization.domain.model.CatalogEventOutcome;
 import com.toneatti.catalogo.synchronization.domain.model.CatalogIncrement;
 import com.toneatti.catalogo.synchronization.domain.model.CatalogSnapshot;
 import com.toneatti.catalogo.synchronization.domain.model.CatalogSyncAction;
+import com.toneatti.catalogo.synchronization.domain.model.CatalogUpdated;
 import com.toneatti.catalogo.synchronization.domain.model.CatalogVersionWindow;
+import com.toneatti.catalogo.synchronization.domain.model.ProcessedCatalogEvent;
 import com.toneatti.catalogo.synchronization.domain.ports.in.ApplyCatalogIncrementUseCase;
 import com.toneatti.catalogo.synchronization.domain.ports.in.ApplyCatalogSnapshotUseCase;
 import com.toneatti.catalogo.synchronization.domain.ports.in.GetCatalogIncrementUseCase;
 import com.toneatti.catalogo.synchronization.domain.ports.in.GetCatalogSnapshotUseCase;
 import com.toneatti.catalogo.synchronization.domain.ports.in.GetCatalogVersionUseCase;
 import com.toneatti.catalogo.synchronization.domain.ports.in.GetCatalogVersionWindowUseCase;
+import com.toneatti.catalogo.synchronization.domain.ports.in.IsCatalogEventProcessedUseCase;
+import com.toneatti.catalogo.synchronization.domain.ports.in.RecordProcessedCatalogEventUseCase;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 
+import java.time.Instant;
 import java.util.Optional;
 import java.util.concurrent.locks.ReentrantLock;
 
@@ -34,6 +41,8 @@ public class CatalogSynchronizationService {
     private final GetCatalogVersionWindowUseCase getCatalogVersionWindowUseCase;
     private final GetCatalogIncrementUseCase getCatalogIncrementUseCase;
     private final ApplyCatalogIncrementUseCase applyCatalogIncrementUseCase;
+    private final IsCatalogEventProcessedUseCase isCatalogEventProcessedUseCase;
+    private final RecordProcessedCatalogEventUseCase recordProcessedCatalogEventUseCase;
 
     // Two synchronizations at once would apply the same versions twice
     private final ReentrantLock running = new ReentrantLock();
@@ -59,6 +68,36 @@ public class CatalogSynchronizationService {
         } finally {
             running.unlock();
         }
+    }
+
+    /**
+     * Handles a CatalogUpdated (section 16): a recorded eventId is a duplicate and does nothing (section 18.1).
+     * Otherwise synchronizes and records the eventId only once the local version reached the announced one, so a
+     * failure leaves it unrecorded and its redelivery synchronizes again; that repeats no effects, because the
+     * synchronization only applies the versions the local catalog lacks.
+     * The synchronization runs even when the local version is already newer: a stale redelivery then only compares
+     * versions, and a cátedra that rebuilt its history (section 14.2) gets its snapshot right away.
+     *
+     * @throws CatalogSynchronizationPendingException when the local version is still behind, because another
+     *                                                synchronization was running or Redis does not show it yet
+     */
+    public CatalogEventOutcome processCatalogUpdated(CatalogUpdated event) {
+        if (isCatalogEventProcessedUseCase.isCatalogEventProcessed(event.eventId())) {
+            log.info("CatalogUpdated {} (version {}) was already processed", event.eventId(), event.newVersion());
+            return CatalogEventOutcome.DUPLICATE;
+        }
+        synchronizeCatalog();
+        Optional<Long> localVersion = getCatalogVersionUseCase.getCatalogVersion();
+        if (localVersion.isEmpty() || localVersion.get() < event.newVersion()) {
+            throw new CatalogSynchronizationPendingException("CatalogUpdated " + event.eventId() + " announced version "
+                    + event.newVersion() + ", the local catalog is at " + localVersion.map(String::valueOf)
+                    .orElse("no version"));
+        }
+        recordProcessedCatalogEventUseCase.recordProcessedCatalogEvent(
+                new ProcessedCatalogEvent(null, event.eventId(), event.newVersion(), Instant.now()));
+        log.info("CatalogUpdated {} (version {}) processed: local catalog at version {}", event.eventId(),
+                event.newVersion(), localVersion.get());
+        return CatalogEventOutcome.SYNCHRONIZED;
     }
 
     /**
