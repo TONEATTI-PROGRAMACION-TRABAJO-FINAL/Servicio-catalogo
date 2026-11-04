@@ -40,10 +40,15 @@ El servicio escucha en el puerto **8081** (Servicio-turnos usa el 8080). Para ca
 | `CATEDRA_KAFKA_BOOTSTRAP_SERVERS` | `catedra.kafka.bootstrap-servers` | `integration.kafkaBootstrapServers` |
 | `CATEDRA_KAFKA_CONSUMER_GROUP_ID` | `catedra.kafka.consumer-group-id` | `integration.kafkaConsumerGroupId` |
 | `CATEDRA_KAFKA_CATALOG_TOPIC` | `catedra.kafka.catalog-topic` | `integration.kafkaCatalogTopic` |
+| `CATEDRA_KAFKA_SECURITY_PROTOCOL` | `catedra.kafka.security-protocol` | Opcional. `PLAINTEXT` por defecto: el contrato no entrega credenciales de Kafka |
+| `CATEDRA_KAFKA_AUTO_OFFSET_RESET` | `catedra.kafka.auto-offset-reset` | Opcional. `earliest` (por defecto) o `latest` |
+| `CATEDRA_KAFKA_RETRY_MAX_ELAPSED_TIME` | `catedra.kafka.retry-max-elapsed-time` | Opcional. Cuánto se reintenta un `CatalogUpdated` cuyo procesamiento falla, en ISO-8601; por defecto `PT2M` |
+| `CATEDRA_KAFKA_LISTENER_ENABLED` | `catedra.kafka.listener-enabled` | Opcional. `false` deja el consumidor detenido; por defecto `true` |
+| `CATEDRA_KAFKA_PROCESSED_EVENTS_RETENTION` | `catedra.kafka.processed-events-retention` | Opcional, por defecto `P7D`: cuánto se guardan los `eventId` procesados para reconocer un `CatalogUpdated` repetido |
 
 Los campos `integration.*` los devuelven `POST /api/student/register`, `POST /api/authenticate` y `GET /api/student/integration`.
 
-Salvo `CATALOGO_SERVER_PORT`, los timeouts y las `CATEDRA_SYNC_*`, todas son obligatorias. Si falta alguna, la aplicación no arranca y muestra `APPLICATION FAILED TO START` con la lista de propiedades faltantes.
+Salvo `CATALOGO_SERVER_PORT`, los timeouts, las `CATEDRA_SYNC_*` y las `CATEDRA_KAFKA_*` marcadas como opcionales, todas son obligatorias. Si falta alguna, la aplicación no arranca y muestra `APPLICATION FAILED TO START` con la lista de propiedades faltantes.
 
 ### Sincronización del catálogo
 
@@ -62,6 +67,14 @@ El snapshot reemplaza la copia local con las tres colecciones y la versión en u
 - Si la cátedra o Redis no responden (timeout, conexión rechazada, 5xx), el servicio arranca igual, escribe un WARN por intento y reintenta con espera exponencial hasta `CATEDRA_SYNC_MAX_ATTEMPTS`. Al rendirse escribe un ERROR. Mientras tanto la API devuelve la última copia local.
 - Si responde 401 o 403, el JWT técnico no sirve: escribe un ERROR que pide revisar `CATEDRA_JWT` y no reintenta.
 
+### Notificaciones de la cátedra (Kafka)
+
+Además, el servicio consume `CatalogUpdated` de `CATEDRA_KAFKA_CATALOG_TOPIC` (sección 15.3 del contrato) y sincroniza enseguida, sin esperar el siguiente intervalo. El evento solo avisa: los datos salen de Redis o del snapshot, con las mismas reglas de la tabla de arriba. Como la sincronización compara versiones, un evento que llega después de uno perdido aplica también las versiones que faltaban.
+
+- **Al menos una vez.** El offset se confirma recién después de procesar cada mensaje, nunca automáticamente. El `eventId` se guarda en `processed_catalog_events` (con restricción única) solo cuando la versión local llegó a la `newVersion` del evento: un mensaje repetido se reconoce y no hace nada (sección 18.1). Los `eventId` se guardan `CATEDRA_KAFKA_PROCESSED_EVENTS_RETENTION` (7 días por defecto); los más viejos se borran al registrar cada evento. La base es en memoria, así que la tabla empieza vacía en cada arranque: un mensaje que Kafka reentregue después de reiniciar vuelve a sincronizar, y eso no repite efectos porque solo se aplican las versiones que faltan.
+- **Mensaje ilegible.** JSON inválido, sin `eventId` o `newVersion`, con un `eventType` distinto de `CatalogUpdated` o con un `schemaVersion` distinto de `1`: se deja en el log (`WARN`, con partición y offset) y se saltea, sin reintentar. Los campos desconocidos se ignoran.
+- **Error al procesar.** Si la cátedra o Redis no responden, o si otra sincronización (el arranque o la comparación periódica) estaba corriendo y la versión local todavía no llegó a la del evento, el mensaje se reintenta en el lugar con espera exponencial (1 s, 2 s, 4 s… hasta 30 s entre intentos) durante `CATEDRA_KAFKA_RETRY_MAX_ELAPSED_TIME` (2 minutos por defecto). Mientras tanto la partición espera. Después se escribe un ERROR con el mensaje y se saltea; la comparación periódica recupera el atraso. Un 401 o 403 no se reintenta: escribe un ERROR que pide revisar `CATEDRA_JWT`.
+
 ### Pasos
 
 1. Copiar el archivo de ejemplo y completar los valores reales:
@@ -79,4 +92,4 @@ El archivo `.env` contiene secretos (JWT y password de Redis): **nunca se commit
 
 ### Tests
 
-Los tests no necesitan las variables reales. `src/test/resources/application-test.properties` define valores ficticios y el test de contexto activa el perfil `test`, así que `./mvnw clean verify` funciona igual en local y en GitHub Actions.
+Los tests no necesitan las variables reales. `src/test/resources/application-test.properties` define valores ficticios y el test de contexto activa el perfil `test`, así que `./mvnw clean verify` funciona igual en local y en GitHub Actions. El consumidor Kafka queda detenido en los tests, salvo en su test de integración, que lo prueba contra un broker embebido (`@EmbeddedKafka`): no hace falta Docker ni el entorno de la cátedra.
