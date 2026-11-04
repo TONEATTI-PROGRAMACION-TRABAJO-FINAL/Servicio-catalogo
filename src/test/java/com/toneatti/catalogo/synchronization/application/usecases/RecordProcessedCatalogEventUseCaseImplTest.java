@@ -10,8 +10,12 @@ import java.time.Instant;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.inOrder;
 import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.when;
 
 class RecordProcessedCatalogEventUseCaseImplTest {
@@ -33,6 +37,26 @@ class RecordProcessedCatalogEventUseCaseImplTest {
         InOrder order = inOrder(repository);
         order.verify(repository).create(event);
         order.verify(repository).deleteProcessedBefore(Instant.parse("2026-09-03T13:45:03Z"));
+    }
+
+    @Test
+    void rejectsANullEventWithoutTouchingTheRepository() {
+        assertThatThrownBy(() -> useCase.recordProcessedCatalogEvent(null))
+                .isInstanceOf(NullPointerException.class)
+                .hasMessage("event");
+
+        verifyNoInteractions(repository);
+    }
+
+    @Test
+    void failsWithoutPurgingWhenTheRepositoryReturnsNoRecordedEvent() {
+        ProcessedCatalogEvent event = new ProcessedCatalogEvent(null, "catalog-event-7-4f3b", 7, PROCESSED_AT);
+
+        assertThatThrownBy(() -> useCase.recordProcessedCatalogEvent(event))
+                .isInstanceOf(NullPointerException.class)
+                .hasMessage("The repository returned no recorded event");
+
+        verify(repository, never()).deleteProcessedBefore(any());
     }
 
     @Test

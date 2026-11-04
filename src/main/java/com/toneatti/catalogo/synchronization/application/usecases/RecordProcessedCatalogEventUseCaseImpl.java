@@ -10,6 +10,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.time.Duration;
 import java.time.Instant;
+import java.util.Objects;
 
 /**
  * Records a CatalogUpdated as processed, so its redelivery is recognized (section 18.1), and in the same transaction
@@ -38,8 +39,10 @@ public class RecordProcessedCatalogEventUseCaseImpl implements RecordProcessedCa
     @Override
     @Transactional
     public ProcessedCatalogEvent recordProcessedCatalogEvent(ProcessedCatalogEvent event) {
-        ProcessedCatalogEvent recorded = processedCatalogEventRepository.create(event);
-        Instant cutoff = event.processedAt().minus(retention);
+        Objects.requireNonNull(event, "event");
+        ProcessedCatalogEvent recorded = Objects.requireNonNull(processedCatalogEventRepository.create(event),
+                "The repository returned no recorded event");
+        Instant cutoff = recorded.processedAt().minus(retention);
         int deleted = processedCatalogEventRepository.deleteProcessedBefore(cutoff);
         if (deleted > 0) {
             log.debug("Deleted {} catalog events processed before {}", deleted, cutoff);
