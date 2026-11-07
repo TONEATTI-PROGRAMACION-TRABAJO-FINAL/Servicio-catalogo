@@ -1,6 +1,7 @@
 package com.toneatti.catalogo.synchronization.infrastructure.redis.adapter;
 
 import com.toneatti.catalogo.config.CatedraIntegrationProperties;
+import com.toneatti.catalogo.config.CatedraKafkaTestProperties;
 import com.toneatti.catalogo.config.CatedraRedisConfig;
 import com.toneatti.catalogo.professional.domain.model.Professional;
 import com.toneatti.catalogo.professionalcategory.domain.model.ProfessionalCategory;
@@ -287,6 +288,6 @@ class RedisCatalogChangesRepositoryAdapterTest {
                 Duration.ofSeconds(1),
                 new CatedraIntegrationProperties.Redis(REDIS.getHost(), port, user, password, namespace,
                         Duration.ofSeconds(1), COMMAND_TIMEOUT),
-                new CatedraIntegrationProperties.Kafka("localhost:9092", "alumnos-test", "catedra.catalog.test"));
+                CatedraKafkaTestProperties.KAFKA);
     }
 }

@@ -48,6 +48,10 @@ class CatedraIntegrationPropertiesTest {
             assertThat(properties.kafka().bootstrapServers()).isEqualTo("localhost:9092");
             assertThat(properties.kafka().consumerGroupId()).isEqualTo("alumnos-test");
             assertThat(properties.kafka().catalogTopic()).isEqualTo("catedra.catalog.test");
+            assertThat(properties.kafka().securityProtocol()).isEqualTo("PLAINTEXT");
+            assertThat(properties.kafka().autoOffsetReset()).isEqualTo("earliest");
+            assertThat(properties.kafka().retryMaxElapsedTime()).isEqualTo(Duration.ofMinutes(2));
+            assertThat(properties.kafka().listenerEnabled()).isTrue();
         });
     }
 
@@ -84,6 +88,38 @@ class CatedraIntegrationPropertiesTest {
     @Test
     void failsWhenAKafkaPropertyIsMissing() {
         assertFailsOn("kafka.catalogTopic", "catedra.kafka.catalog-topic=");
+    }
+
+    @Test
+    void failsWhenTheSecurityProtocolIsUnknown() {
+        assertFailsOn("kafka.securityProtocol", "catedra.kafka.security-protocol=KERBEROS");
+    }
+
+    @Test
+    void failsWhenTheAutoOffsetResetIsUnknown() {
+        assertFailsOn("kafka.autoOffsetReset", "catedra.kafka.auto-offset-reset=none");
+    }
+
+    @Test
+    void failsWhenTheRetryTimeIsNotPositive() {
+        assertFailsOn("kafka.retryMaxElapsedTime", "catedra.kafka.retry-max-elapsed-time=PT0S");
+    }
+
+    @Test
+    void bindsTheKafkaConsumerFromEnvironmentVariables() {
+        contextRunner.withInitializer(context -> TestPropertyValues
+                        .of("CATEDRA_KAFKA_SECURITY_PROTOCOL=SASL_SSL", "CATEDRA_KAFKA_AUTO_OFFSET_RESET=latest",
+                                "CATEDRA_KAFKA_RETRY_MAX_ELAPSED_TIME=PT30S", "CATEDRA_KAFKA_LISTENER_ENABLED=false")
+                        .applyTo(context.getEnvironment(), TestPropertyValues.Type.SYSTEM_ENVIRONMENT))
+                .run(context -> {
+                    CatedraIntegrationProperties.Kafka kafka =
+                            context.getBean(CatedraIntegrationProperties.class).kafka();
+
+                    assertThat(kafka.securityProtocol()).isEqualTo("SASL_SSL");
+                    assertThat(kafka.autoOffsetReset()).isEqualTo("latest");
+                    assertThat(kafka.retryMaxElapsedTime()).isEqualTo(Duration.ofSeconds(30));
+                    assertThat(kafka.listenerEnabled()).isFalse();
+                });
     }
 
     // The variables documented in application.properties and .env.example, through the same relaxed binding.
