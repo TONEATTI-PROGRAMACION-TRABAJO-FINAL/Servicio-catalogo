@@ -11,11 +11,12 @@ import org.springframework.dao.DataIntegrityViolationException;
 
 import java.time.Instant;
 
+import static com.toneatti.catalogo.synchronization.infrastructure.persistence.ProcessedCatalogEventFixtures.processed;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 /**
- * Against the H2 schema Hibernate generates, so the unique constraint on the eventId is the real one. Not
+ * Against the schema of the Flyway migrations on H2, so the unique constraint on the eventId is the real one. Not
  * transactional: a failed flush marks the transaction for rollback, and here it must leave the first row.
  */
 @CatalogIntegrationTest
@@ -65,9 +66,5 @@ class JpaProcessedCatalogEventRepositoryAdapterTest {
 
         assertThat(jpaRepository.findAll()).extracting(ProcessedCatalogEventEntity::getEventId)
                 .containsExactlyInAnyOrder("catalog-event-6-edge", "catalog-event-7-new");
-    }
-
-    private static ProcessedCatalogEvent processed(String eventId, Instant processedAt) {
-        return new ProcessedCatalogEvent(null, eventId, 7, processedAt);
     }
 }

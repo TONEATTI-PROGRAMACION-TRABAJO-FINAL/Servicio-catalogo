@@ -102,7 +102,7 @@ class CatalogSyncOnStartupIntegrationTest {
                 .web(WebApplicationType.NONE)
                 .profiles("test")
                 // As arguments, so they win over application.properties (builder properties are only defaults)
-                .run("--spring.datasource.url=jdbc:h2:mem:startup-" + UUID.randomUUID(),
+                .run("--test.database-name=startup-" + UUID.randomUUID(),
                         "--catedra.api-base-url=" + catedra.baseUrl(),
                         "--catedra.sync.on-startup=true",
                         "--catedra.sync.max-attempts=" + maxAttempts,
