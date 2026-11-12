@@ -10,15 +10,19 @@ import org.springframework.validation.annotation.Validated;
 import java.time.Duration;
 
 /**
- * Loading of the catalog snapshot at startup. When it fails because the cátedra is unavailable, it is retried up to
+ * Synchronization of the catalog at startup. When it fails because the cátedra is unavailable, it is retried up to
  * {@code maxAttempts} in total, waiting {@code initialBackoff} and doubling the wait up to {@code maxBackoff}
- * (section 18.4: limited and observable retries). {@code snapshotOnStartup} false skips it, for tests.
+ * (section 18.4: limited and observable retries). {@code onStartup} false skips it, for tests.
+ * Besides, every {@code pollInterval} the versions are compared again, so a lost notification does not leave the
+ * catalog behind (section 16); {@code pollEnabled} false turns it off.
  */
 @Validated
 @ConfigurationProperties(prefix = "catedra.sync")
 public record CatalogSyncProperties(
-        @DefaultValue("true") boolean snapshotOnStartup,
+        @DefaultValue("true") boolean onStartup,
         @Min(1) @DefaultValue("8") int maxAttempts,
         @NotNull @DurationMin(millis = 1) @DefaultValue("PT2S") Duration initialBackoff,
-        @NotNull @DurationMin(millis = 1) @DefaultValue("PT60S") Duration maxBackoff) {
+        @NotNull @DurationMin(millis = 1) @DefaultValue("PT60S") Duration maxBackoff,
+        @DefaultValue("true") boolean pollEnabled,
+        @NotNull @DurationMin(millis = 1) @DefaultValue("PT1M") Duration pollInterval) {
 }

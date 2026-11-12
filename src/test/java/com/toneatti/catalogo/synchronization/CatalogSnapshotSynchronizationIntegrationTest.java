@@ -93,7 +93,6 @@ class CatalogSnapshotSynchronizationIntegrationTest {
         assertThat(schedules.findAll()).extracting(WeeklySchedule::getId, WeeklySchedule::getEnabled)
                 .containsExactlyInAnyOrder(tuple(21L, true), tuple(22L, false));
         assertThat(versions.findCurrentVersion()).contains(SNAPSHOT_VERSION);
-        assertThat(service.hasCatalogVersion()).isTrue();
     }
 
     @Test
@@ -116,10 +115,14 @@ class CatalogSnapshotSynchronizationIntegrationTest {
     }
 
     @Test
-    void hasNoVersionUntilASnapshotIsApplied() {
+    void synchronizingWithoutALocalVersionLoadsTheSnapshot() {
         syncStateRows.deleteAll();
+        CATEDRA.respond(SNAPSHOT_PATH, 200, SNAPSHOT);
 
-        assertThat(service.hasCatalogVersion()).isFalse();
+        service.synchronizeCatalog();
+
+        assertThat(versions.findCurrentVersion()).contains(SNAPSHOT_VERSION);
+        assertThat(professionals.findAll()).extracting(Professional::getId).containsExactlyInAnyOrder(15L, 16L);
     }
 
     private void assertThePreviousCatalogIsIntact() {

@@ -1,4 +1,4 @@
-package com.toneatti.catalogo.synchronization.infrastructure.rest.dto;
+package com.toneatti.catalogo.synchronization.infrastructure.shared.dto;
 
 import java.time.Instant;
 
