@@ -20,6 +20,9 @@ El servicio escucha en el puerto **8081** (Servicio-turnos usa el 8080). Para ca
 | Variable | Propiedad | De dónde sale |
 | --- | --- | --- |
 | `CATALOGO_SERVER_PORT` | `server.port` | Opcional, por defecto `8081` |
+| `CATALOGO_DB_URL` | `spring.datasource.url` | URL JDBC de la base PostgreSQL del servicio. Con la base local: `jdbc:postgresql://localhost:5432/catalogo` |
+| `CATALOGO_DB_USERNAME` | `spring.datasource.username` | Usuario de esa base. Con la base local, el mismo valor que en el `.env` de Servicio-turnos |
+| `CATALOGO_DB_PASSWORD` | `spring.datasource.password` | Contraseña de ese usuario. Con la base local, el mismo valor que en el `.env` de Servicio-turnos |
 | `CATEDRA_API_BASE_URL` | `catedra.api-base-url` | URL base de la API REST, la envía la cátedra |
 | `CATEDRA_JWT` | `catedra.jwt` | `id_token` de la cuenta técnica (registro o login) |
 | `CATEDRA_CONNECT_TIMEOUT` | `catedra.connect-timeout` | Opcional, por defecto `PT2S` (duración ISO-8601) |
@@ -48,7 +51,13 @@ El servicio escucha en el puerto **8081** (Servicio-turnos usa el 8080). Para ca
 
 Los campos `integration.*` los devuelven `POST /api/student/register`, `POST /api/authenticate` y `GET /api/student/integration`.
 
-Salvo `CATALOGO_SERVER_PORT`, los timeouts, las `CATEDRA_SYNC_*` y las `CATEDRA_KAFKA_*` marcadas como opcionales, todas son obligatorias. Si falta alguna, la aplicación no arranca y muestra `APPLICATION FAILED TO START` con la lista de propiedades faltantes.
+Salvo `CATALOGO_SERVER_PORT`, los timeouts, las `CATEDRA_SYNC_*` y las `CATEDRA_KAFKA_*` marcadas como opcionales, todas son obligatorias. Si falta alguna, la aplicación no arranca y muestra `APPLICATION FAILED TO START` con la lista de propiedades faltantes. Las tres `CATALOGO_DB_*` no entran en esa lista: si faltan, el arranque falla al crear la conexión a la base.
+
+### Base de datos
+
+La base es PostgreSQL. El esquema lo crean las migraciones de Flyway (`src/main/resources/db/migration`) al arrancar el servicio, y Hibernate solo lo valida (`ddl-auto=validate`). La base es persistente: la copia local del catálogo, su versión y los `eventId` procesados se conservan entre reinicios.
+
+La base local se levanta con el `compose.yaml` de **Servicio-turnos** (`docker compose up -d postgres` en ese repo), que crea las bases `catalogo` y `turnos`, cada una con su propio usuario como dueño. Cada usuario solo puede conectarse a su propia base. El usuario de `catalogo` sale de `CATALOGO_DB_USERNAME` y `CATALOGO_DB_PASSWORD` del `.env` de Servicio-turnos, así que en el `.env` de este repo tienen que tener los mismos valores. Los detalles (volumen, puerto, cómo recrear las credenciales) están en el README de Servicio-turnos.
 
 ### Sincronización del catálogo
 
@@ -56,7 +65,7 @@ Al arrancar, y después cada `CATEDRA_SYNC_POLL_INTERVAL` (por defecto un minuto
 
 | Estado | Acción |
 | --- | --- |
-| Sin versión local (la base es en memoria, así que pasa en cada arranque) | Snapshot por REST, sin leer Redis |
+| Sin versión local (la primera vez, con la base vacía; la versión local se conserva entre reinicios) | Snapshot por REST, sin leer Redis |
 | Local menor que `catedra:sync:oldest-available-version` | Snapshot (no se intenta `changes:{oldest}`) |
 | Local mayor que `catedra:sync:current-version` | Snapshot, con un WARN: la cátedra reconstruyó su historial |
 | Local igual a la actual | Nada |
@@ -71,7 +80,7 @@ El snapshot reemplaza la copia local con las tres colecciones y la versión en u
 
 Además, el servicio consume `CatalogUpdated` de `CATEDRA_KAFKA_CATALOG_TOPIC` (sección 15.3 del contrato) y sincroniza enseguida, sin esperar el siguiente intervalo. El evento solo avisa: los datos salen de Redis o del snapshot, con las mismas reglas de la tabla de arriba. Como la sincronización compara versiones, un evento que llega después de uno perdido aplica también las versiones que faltaban.
 
-- **Al menos una vez.** El offset se confirma recién después de procesar cada mensaje, nunca automáticamente. El `eventId` se guarda en `processed_catalog_events` (con restricción única) solo cuando la versión local llegó a la `newVersion` del evento: un mensaje repetido se reconoce y no hace nada (sección 18.1). Los `eventId` se guardan `CATEDRA_KAFKA_PROCESSED_EVENTS_RETENTION` (7 días por defecto); los más viejos se borran al registrar cada evento. La base es en memoria, así que la tabla empieza vacía en cada arranque: un mensaje que Kafka reentregue después de reiniciar vuelve a sincronizar, y eso no repite efectos porque solo se aplican las versiones que faltan.
+- **Al menos una vez.** El offset se confirma recién después de procesar cada mensaje, nunca automáticamente. El `eventId` se guarda en `processed_catalog_events` (con restricción única) solo cuando la versión local llegó a la `newVersion` del evento: un mensaje repetido se reconoce y no hace nada (sección 18.1). Los `eventId` se guardan `CATEDRA_KAFKA_PROCESSED_EVENTS_RETENTION` (7 días por defecto); los más viejos se borran al registrar cada evento. Como la base es persistente, un mensaje que Kafka reentregue después de reiniciar se reconoce como repetido mientras su `eventId` siga guardado; si ya se borró, vuelve a sincronizar, y eso no repite efectos porque solo se aplican las versiones que faltan.
 - **Mensaje ilegible.** JSON inválido, sin `eventId` o `newVersion`, con un `eventType` distinto de `CatalogUpdated` o con un `schemaVersion` distinto de `1`: se deja en el log (`WARN`, con partición y offset) y se saltea, sin reintentar. Los campos desconocidos se ignoran.
 - **Error al procesar.** Si la cátedra o Redis no responden, o si otra sincronización (el arranque o la comparación periódica) estaba corriendo y la versión local todavía no llegó a la del evento, el mensaje se reintenta en el lugar con espera exponencial (1 s, 2 s, 4 s… hasta 30 s entre intentos) durante `CATEDRA_KAFKA_RETRY_MAX_ELAPSED_TIME` (2 minutos por defecto). Mientras tanto la partición espera. Después se escribe un ERROR con el mensaje y se saltea; la comparación periódica recupera el atraso. Un 401 o 403 no se reintenta: escribe un ERROR que pide revisar `CATEDRA_JWT`.
 
@@ -81,15 +90,18 @@ Además, el servicio consume `CatalogUpdated` de `CATEDRA_KAFKA_CATALOG_TOPIC` (
    ```bash
    cp .env.example .env
    ```
-2. Cargar las variables en la terminal y levantar el servicio:
+2. Levantar la base local con el `compose.yaml` de Servicio-turnos (ver [Base de datos](#base-de-datos)).
+3. Cargar las variables en la terminal y levantar el servicio:
    ```bash
    set -a; source .env; set +a
    ./mvnw spring-boot:run
    ```
    En IntelliJ también se pueden cargar desde *Run Configuration → Environment variables*.
 
-El archivo `.env` contiene secretos (JWT y password de Redis): **nunca se commitea**, ni se pega en capturas, issues o logs.
+El archivo `.env` contiene secretos (JWT, password de Redis y contraseña de la base): **nunca se commitea**, ni se pega en capturas, issues o logs.
 
 ### Tests
 
-Los tests no necesitan las variables reales. `src/test/resources/application-test.properties` define valores ficticios y el test de contexto activa el perfil `test`, así que `./mvnw clean verify` funciona igual en local y en GitHub Actions. El consumidor Kafka queda detenido en los tests, salvo en su test de integración, que lo prueba contra un broker embebido (`@EmbeddedKafka`): no hace falta Docker ni el entorno de la cátedra.
+Los tests no necesitan las variables reales. `src/test/resources/application-test.properties` define valores ficticios y el test de contexto activa el perfil `test`, así que `./mvnw clean verify` funciona igual en local y en GitHub Actions. El consumidor Kafka queda detenido en los tests, salvo en su test de integración, que lo prueba contra un broker embebido (`@EmbeddedKafka`): no hace falta el entorno de la cátedra.
+
+La base de los tests es H2 en memoria en modo PostgreSQL, sobre la que corren las mismas migraciones de Flyway. `PostgresSchemaIntegrationTest` además las aplica sobre un PostgreSQL 18 real con Testcontainers y verifica que Hibernate valide el esquema. Ese test y el del adaptador de Redis necesitan Docker y, si no está disponible, se saltean.
