@@ -105,3 +105,21 @@ El archivo `.env` contiene secretos (JWT, password de Redis y contraseña de la 
 Los tests no necesitan las variables reales. `src/test/resources/application-test.properties` define valores ficticios y el test de contexto activa el perfil `test`, así que `./mvnw clean verify` funciona igual en local y en GitHub Actions. El consumidor Kafka queda detenido en los tests, salvo en su test de integración, que lo prueba contra un broker embebido (`@EmbeddedKafka`): no hace falta el entorno de la cátedra.
 
 La base de los tests es H2 en memoria en modo PostgreSQL, sobre la que corren las mismas migraciones de Flyway. `PostgresSchemaIntegrationTest` además las aplica sobre un PostgreSQL 18 real con Testcontainers y verifica que Hibernate valide el esquema. Ese test y el del adaptador de Redis necesitan Docker y, si no está disponible, se saltean.
+
+### Imagen Docker
+
+El `Dockerfile` construye la imagen en dos etapas: la primera compila el jar con `./mvnw` sobre un JDK 25, sin correr los tests (los corre GitHub Actions), y la final tiene solo el JRE 25 y `app.jar`. Para construirla a mano:
+
+```bash
+docker build -t servicio-catalogo:local .
+```
+
+El `.dockerignore` deja entrar al contexto de build solo `mvnw`, `.mvn/`, `pom.xml` y `src/`: el `.env`, `target/` y `.git/` nunca llegan a la imagen.
+
+La imagen no trae configuración ni secretos: todo se pasa por variables de entorno, las mismas de la tabla de [Variables](#variables). Corre con el usuario no root `catalogo` y escucha en el puerto `8081` (o en `CATALOGO_SERVER_PORT`). Dentro del contenedor la JVM queda en UTC; la lógica del servicio no depende de la zona horaria, pero los timestamps del log salen en UTC.
+
+El servicio se levanta con el `compose.yaml` de **Servicio-turnos**, que construye esta imagen desde este repo (`build: ../Servicio-catalogo`), así que los dos repos tienen que estar clonados uno al lado del otro. Dentro del compose, `localhost` es el propio contenedor: la URL de la base usa el host `postgres`, el nombre del servicio de la base:
+
+```
+CATALOGO_DB_URL=jdbc:postgresql://postgres:5432/catalogo
+```
