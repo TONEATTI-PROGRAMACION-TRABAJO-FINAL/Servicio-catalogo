@@ -60,7 +60,7 @@ class CatalogSyncPollerIntegrationTest {
     // As arguments, so they win over application.properties; the test profile turns off both triggers
     private ConfigurableApplicationContext start(String... overrides) {
         List<String> arguments = new ArrayList<>(List.of(
-                "--spring.datasource.url=jdbc:h2:mem:poller-" + UUID.randomUUID(),
+                "--test.database-name=poller-" + UUID.randomUUID(),
                 "--catedra.api-base-url=" + catedra.baseUrl()));
         arguments.addAll(List.of(overrides));
         return new SpringApplicationBuilder(CatalogoApplication.class)
